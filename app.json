@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "app-curriculos",
+    "name": "Criador de Currículos",
     "slug": "app-curriculos",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -20,10 +20,16 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.karengomes.appcurriculos"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e7becb3b-ece8-4a23-938e-d86d9f11558e"
+      }
     }
   }
 }
