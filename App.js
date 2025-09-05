@@ -1,4 +1,3 @@
-// App.js
 import React, { useEffect, useState, useContext } from "react";
 import { ActivityIndicator, View, StyleSheet } from "react-native";
 import { Provider as PaperProvider } from "react-native-paper";
@@ -12,13 +11,13 @@ import WelcomeScreen from "./src/screens/WelcomeScreen";
 const AppContent = () => {
   const { theme } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
- const [isFirstLaunch, setIsFirstLaunch] = useState(null); 
+  const [isFirstLaunch, setIsFirstLaunch] = useState(null); 
 
   useEffect(() => {
     const checkWelcome = async () => {
       try {
         const value = await AsyncStorage.getItem("hasSeenWelcome");
-        setIsFirstLaunch(value === null); // se não tem valor → primeira vez
+        setIsFirstLaunch(value === null);
       } catch (e) {
         console.log("Erro ao verificar tela de boas-vindas:", e);
         setIsFirstLaunch(false);
@@ -33,21 +32,24 @@ const AppContent = () => {
     await AsyncStorage.setItem("hasSeenWelcome", "true");
     setIsFirstLaunch(false);
   };
+  
+  const styles = createStyles(theme);
 
   if (loading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <ActivityIndicator size="large" color={theme?.colors?.primary || '#6200ee'} />
       </View>
     );
   }
 
+  // O PaperProvider agora envolve a navegação
   return (
     <PaperProvider theme={theme}>
       {isFirstLaunch ? (
         <WelcomeScreen onFinish={finishWelcome} />
       ) : (
-        <RootNavigator />
+        <RootNavigator /> // A nossa navegação completa
       )}
     </PaperProvider>
   );
@@ -55,19 +57,19 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <UserPreferencesProvider>
+    <UserPreferencesProvider>
+      <ThemeProvider>
         <AppContent />
-      </UserPreferencesProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </UserPreferencesProvider>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme) => StyleSheet.create({
   loader: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: theme?.colors?.background || '#fff',
   },
 });

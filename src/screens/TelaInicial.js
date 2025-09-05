@@ -109,7 +109,7 @@ export default function TelaInicial({ navigation }) {
                     description={t("blogTipsDesc")}
                     left={props => <List.Icon {...props} icon="post-outline" />}
                     right={props => <List.Icon {...props} icon="open-in-new" />}
-                    onPress={() => Linking.openURL('https://www.google.com/search?q=dicas+de+carreira')}
+                    onPress={() => navigation.navigate('BlogScreen')}
                 />
             </Card>
         </Animatable.View>

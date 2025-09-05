@@ -183,7 +183,7 @@ export default function TelaFormulario({ navigation, route }) {
         lista.push(curriculoParaSalvar);
       }
       await AsyncStorage.setItem("curriculos", JSON.stringify(lista));
-      navigation.navigate("MeusCurrículos");
+      navigation.navigate("MeusCurriculos");
     } catch (e) {
       console.error("Erro ao salvar currículo", e);
     }
