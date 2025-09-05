@@ -71,13 +71,15 @@ export default function TelaFormulario({ navigation, route }) {
 
   useEffect(() => {
     if (route.params?.curriculo) {
-      const curriculoCarregado = route.params.curriculo;
+      const curriculoCarregado = { ...route.params.curriculo };
       Object.keys(ESTRUTURA_INICIAL).forEach((secao) => {
         if (!curriculoCarregado[secao]) {
           curriculoCarregado[secao] = ESTRUTURA_INICIAL[secao];
         }
       });
       setCurriculo(curriculoCarregado);
+    } else {
+      setCurriculo(ESTRUTURA_INICIAL);
     }
      if (route.params?.objetivoSelecionado) {
       handleInputChange('objetivoProfissional', null, route.params.objetivoSelecionado);
