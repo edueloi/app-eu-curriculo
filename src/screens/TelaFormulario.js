@@ -12,6 +12,7 @@ import {
   TextInput,
   Button,
   Card,
+  Title,
   List,
   Avatar,
   Checkbox,
@@ -25,7 +26,6 @@ import { useFocusEffect } from "@react-navigation/native";
 import { UserPreferencesContext } from "../context/UserPreferencesContext";
 import CustomDropDown from "../components/CustomDropDown";
 
-// ESTRUTURA ATUALIZADA COM A NOVA SEÇÃO
 const ESTRUTURA_INICIAL = {
   nomeInterno: "",
   fotoUri: null,
@@ -54,8 +54,9 @@ const ESTRUTURA_INICIAL = {
       atividades: "",
     },
   ],
-  certificacoes: [{ nome: "", instituicao: "", anoConclusao: null }], // NOVA SEÇÃO
-  habilidades: [{ habilidade: "" }], // SEÇÃO ATUALIZADA
+  certificacoes: [{ nome: "", instituicao: "", anoConclusao: null }],
+  hardSkills: [{ habilidade: "" }],
+  softSkills: [{ habilidade: "" }],
   idiomas: [{ idioma: "", nivel: "" }],
 };
 
@@ -80,9 +81,9 @@ export default function TelaFormulario({ navigation, route }) {
       
       if (curriculoParaEditar) {
         const curriculoCarregado = { ...ESTRUTURA_INICIAL, ...curriculoParaEditar };
-        if (!curriculoCarregado.certificacoes) {
-          curriculoCarregado.certificacoes = ESTRUTURA_INICIAL.certificacoes;
-        }
+        if (!curriculoCarregado.certificacoes) curriculoCarregado.certificacoes = ESTRUTURA_INICIAL.certificacoes;
+        if (!curriculoCarregado.hardSkills) curriculoCarregado.hardSkills = ESTRUTURA_INICIAL.hardSkills;
+        if (!curriculoCarregado.softSkills) curriculoCarregado.softSkills = ESTRUTURA_INICIAL.softSkills;
         setCurriculo(curriculoCarregado);
       } else {
         setCurriculo(ESTRUTURA_INICIAL);
@@ -240,13 +241,13 @@ export default function TelaFormulario({ navigation, route }) {
         <Card style={styles.card}>
           <List.Accordion title={t("personalData")} left={(props) => <List.Icon {...props} icon="account" />} expanded={secaoAberta === "dadosPessoais"} onPress={() => handleAccordionPress("dadosPessoais")}>
             <View style={styles.accordionContent}>
-              <TextInput label={t("name")} placeholder={t("placeholders.fullName")} value={curriculo.dadosPessoais.nome} onChangeText={(text) => handleInputChange("dadosPessoais", "nome", text)} mode="outlined" style={styles.input} />
-              <TextInput label={t("email")} placeholder="seu.email@exemplo.com" value={curriculo.dadosPessoais.email} onChangeText={(text) => handleInputChange("dadosPessoais", "email", text)} mode="outlined" style={styles.input} />
-              <TextInput label={t("phone")} placeholder="(11) 99999-8888" value={curriculo.dadosPessoais.telefone} onChangeText={(text) => handleInputChange("dadosPessoais", "telefone", text)} mode="outlined" style={styles.input} />
+              <TextInput placeholder={t("placeholder_fullName")} label={t("name")} value={curriculo.dadosPessoais.nome} onChangeText={(text) => handleInputChange("dadosPessoais", "nome", text)} mode="outlined" style={styles.input} />
+              <TextInput placeholder={t("placeholder_email")} label={t("email")} value={curriculo.dadosPessoais.email} onChangeText={(text) => handleInputChange("dadosPessoais", "email", text)} mode="outlined" style={styles.input} />
+              <TextInput placeholder={t("placeholder_phone")} label={t("phone")} value={curriculo.dadosPessoais.telefone} onChangeText={(text) => handleInputChange("dadosPessoais", "telefone", text)} mode="outlined" style={styles.input} />
               <CustomDropDown label={t("state")} value={curriculo.dadosPessoais.estado} setValue={(val) => handleInputChange("dadosPessoais", "estado", val)} list={statesList} />
-              <TextInput label={t("city")} placeholder="São Paulo" value={curriculo.dadosPessoais.cidade} onChangeText={(text) => handleInputChange("dadosPessoais", "cidade", text)} mode="outlined" style={styles.input} />
-              <TextInput label={t("linkedin")} placeholder="linkedin.com/in/seu-perfil" value={curriculo.dadosPessoais.linkedin} onChangeText={(text) => handleInputChange("dadosPessoais", "linkedin", text)} mode="outlined" style={styles.input} />
-              <TextInput label={t("portfolio")} placeholder="github.com/seu-usuario" value={curriculo.dadosPessoais.site} onChangeText={(text) => handleInputChange("dadosPessoais", "site", text)} mode="outlined" style={styles.input} />
+              <TextInput placeholder={t("placeholder_city")} label={t("city")} value={curriculo.dadosPessoais.cidade} onChangeText={(text) => handleInputChange("dadosPessoais", "cidade", text)} mode="outlined" style={styles.input} />
+              <TextInput placeholder={t("placeholder_linkedin")} label={t("linkedin")} value={curriculo.dadosPessoais.linkedin} onChangeText={(text) => handleInputChange("dadosPessoais", "linkedin", text)} mode="outlined" style={styles.input} />
+              <TextInput placeholder={t("placeholder_portfolio")} label={t("portfolio")} value={curriculo.dadosPessoais.site} onChangeText={(text) => handleInputChange("dadosPessoais", "site", text)} mode="outlined" style={styles.input} />
             </View>
           </List.Accordion>
         </Card>
@@ -254,7 +255,7 @@ export default function TelaFormulario({ navigation, route }) {
         <Card style={styles.card}>
           <List.Accordion title={t("resumeSummary")} left={(props) => <List.Icon {...props} icon="text-account" />} expanded={secaoAberta === "resumo"} onPress={() => handleAccordionPress("resumo")}>
             <View style={styles.accordionContent}>
-              <TextInput label={t("summary")} value={curriculo.resumoProfissional} onChangeText={(text) => handleInputChange("resumoProfissional", null, text)} mode="outlined" style={styles.input} multiline numberOfLines={4} />
+              <TextInput placeholder={t("placeholder_summary")} label={t("summary")} value={curriculo.resumoProfissional} onChangeText={(text) => handleInputChange("resumoProfissional", null, text)} mode="outlined" style={styles.input} multiline numberOfLines={4} />
               <TextInput label={t("objective")} value={curriculo.objetivoProfissional} onChangeText={(text) => handleInputChange("objetivoProfissional", null, text)} mode="outlined" style={styles.input} multiline numberOfLines={3} />
               <Button icon="lightbulb-on-outline" mode="contained-tonal" style={{ marginTop: 10 }} onPress={() => navigation.navigate("ExemplosObjetivo", { onSelect: (texto) => handleInputChange("objetivoProfissional", null, texto) })}>{t("getExamples")}</Button>
             </View>
@@ -267,8 +268,8 @@ export default function TelaFormulario({ navigation, route }) {
               {(curriculo.formacao || []).map((item, index) => (
                 <View key={index} style={styles.itemContainer}>
                   <CustomDropDown label={t("educationLevel")} value={item.nivel} setValue={(val) => handleInputChange("formacao", "nivel", val, index)} list={educationLevels} />
-                  <TextInput label={t("course")} placeholder={t("placeholders.course")} value={item.curso} onChangeText={(text) => handleInputChange("formacao", "curso", text, index)} mode="outlined" style={styles.input} />
-                  <TextInput label={t("institution")} placeholder="Nome da Universidade" value={item.instituicao} onChangeText={(text) => handleInputChange("formacao", "instituicao", text, index)} mode="outlined" style={styles.input} />
+                  <TextInput label={t("course")} placeholder={t("placeholder_course")} value={item.curso} onChangeText={(text) => handleInputChange("formacao", "curso", text, index)} mode="outlined" style={styles.input} />
+                  <TextInput label={t("institution")} placeholder={t("placeholder_institution")} value={item.instituicao} onChangeText={(text) => handleInputChange("formacao", "instituicao", text, index)} mode="outlined" style={styles.input} />
                   <TouchableOpacity onPress={() => openDatePicker('formacao', index, 'anoConclusao')}>
                     <TextInput label={t("yearConclusion")} value={formatDate(item.anoConclusao)} mode="outlined" style={styles.input} editable={false} right={<TextInput.Icon icon="calendar" />} />
                   </TouchableOpacity>
@@ -285,8 +286,8 @@ export default function TelaFormulario({ navigation, route }) {
             <View style={styles.accordionContent}>
               {(curriculo.experiencias || []).map((item, index) => (
                 <View key={index} style={styles.itemContainer}>
-                  <TextInput label={t("position")} placeholder={t("placeholders.position")} value={item.cargo} onChangeText={(text) => handleInputChange("experiencias", "cargo", text, index)} mode="outlined" style={styles.input} />
-                  <TextInput label={t("company")} placeholder="Nome da Empresa" value={item.empresa} onChangeText={(text) => handleInputChange("experiencias", "empresa", text, index)} mode="outlined" style={styles.input} />
+                  <TextInput label={t("position")} placeholder={t("placeholder_position")} value={item.cargo} onChangeText={(text) => handleInputChange("experiencias", "cargo", text, index)} mode="outlined" style={styles.input} />
+                  <TextInput label={t("company")} placeholder={t("placeholder_company")} value={item.empresa} onChangeText={(text) => handleInputChange("experiencias", "empresa", text, index)} mode="outlined" style={styles.input} />
                   <View style={styles.dateRow}>
                     <TouchableOpacity style={{ flex: 1 }} onPress={() => openDatePicker('experiencias', index, 'dataInicio')}>
                       <TextInput label={t("startDate")} value={formatDate(item.dataInicio)} mode="outlined" style={styles.input} editable={false} right={<TextInput.Icon icon="calendar" />} />
@@ -296,7 +297,7 @@ export default function TelaFormulario({ navigation, route }) {
                     </TouchableOpacity>
                   </View>
                   <Checkbox.Item label={t("currentJob")} status={item.atual ? 'checked' : 'unchecked'} onPress={() => { const isChecked = !item.atual; handleInputChange('experiencias', 'atual', isChecked, index); if (isChecked) { handleInputChange('experiencias', 'dataFim', null, index); } }} position="leading" labelStyle={{ textAlign: 'left' }} style={styles.checkbox} />
-                  <TextInput label={t("activities")} multiline numberOfLines={4} value={item.atividades} onChangeText={(text) => handleInputChange("experiencias", "atividades", text, index)} mode="outlined" style={styles.input} />
+                  <TextInput label={t("activities")} placeholder={t("placeholder_activities")} value={item.atividades} onChangeText={(text) => handleInputChange("experiencias", "atividades", text, index)} mode="outlined" style={styles.input} multiline numberOfLines={4} />
                   <Button icon="delete" textColor="#E53935" onPress={() => removerItem("experiencias", index)} style={styles.deleteButton}>{t("remove")}</Button>
                 </View>
               ))}
@@ -304,14 +305,14 @@ export default function TelaFormulario({ navigation, route }) {
             </View>
           </List.Accordion>
         </Card>
-
+        
         <Card style={styles.card}>
           <List.Accordion title={t("coursesCertifications")} left={(props) => <List.Icon {...props} icon="certificate" />} expanded={secaoAberta === "certificacoes"} onPress={() => handleAccordionPress("certificacoes")}>
             <View style={styles.accordionContent}>
               {(curriculo.certificacoes || []).map((item, index) => (
                 <View key={index} style={styles.itemContainer}>
-                  <TextInput label={t("courseName")} placeholder={t("placeholders.courseName")} value={item.nome} onChangeText={(text) => handleInputChange("certificacoes", "nome", text, index)} mode="outlined" style={styles.input} />
-                  <TextInput label={t("issuingOrganization")} placeholder={t("placeholders.issuingOrganization")} value={item.instituicao} onChangeText={(text) => handleInputChange("certificacoes", "instituicao", text, index)} mode="outlined" style={styles.input} />
+                  <TextInput label={t("courseName")} placeholder={t("placeholder_courseName")} value={item.nome} onChangeText={(text) => handleInputChange("certificacoes", "nome", text, index)} mode="outlined" style={styles.input} />
+                  <TextInput label={t("issuingOrganization")} placeholder={t("placeholder_issuingOrganization")} value={item.instituicao} onChangeText={(text) => handleInputChange("certificacoes", "instituicao", text, index)} mode="outlined" style={styles.input} />
                   <TouchableOpacity onPress={() => openDatePicker('certificacoes', index, 'anoConclusao')}>
                     <TextInput label={t("yearConclusion")} value={formatDate(item.anoConclusao)} mode="outlined" style={styles.input} editable={false} right={<TextInput.Icon icon="calendar" />} />
                   </TouchableOpacity>
@@ -324,15 +325,27 @@ export default function TelaFormulario({ navigation, route }) {
         </Card>
 
         <Card style={styles.card}>
-          <List.Accordion title={t("competencies")} left={(props) => <List.Icon {...props} icon="star-settings" />} expanded={secaoAberta === "habilidades"} onPress={() => handleAccordionPress("habilidades")}>
+          <List.Accordion title={t("competencies")} left={(props) => <List.Icon {...props} icon="star-settings" />} expanded={secaoAberta === "competencias"} onPress={() => handleAccordionPress("competencias")}>
             <View style={styles.accordionContent}>
-              {(curriculo.habilidades || []).map((item, index) => (
-                <View key={index} style={styles.itemContainer}>
-                  <TextInput label={t("skill")} placeholder={t("placeholders.skill")} value={item.habilidade} onChangeText={(text) => handleInputChange("habilidades", "habilidade", text, index)} mode="outlined" style={styles.input} />
-                  <Button icon="delete" textColor="#E53935" onPress={() => removerItem("habilidades", index)} style={styles.deleteButton}>{t("remove")}</Button>
+              <Title>{t("hardSkills")}</Title>
+              {(curriculo.hardSkills || []).map((item, index) => (
+                <View key={`hard-${index}`} style={styles.itemContainer}>
+                  <TextInput label={t("skill")} placeholder={t("placeholder_hardSkill")} value={item.habilidade} onChangeText={(text) => handleInputChange("hardSkills", "habilidade", text, index)} mode="outlined" style={styles.input} />
+                  <Button icon="delete" textColor="#E53935" onPress={() => removerItem("hardSkills", index)} style={styles.deleteButton}>{t("remove")}</Button>
                 </View>
               ))}
-              <Button icon="plus-circle" mode="contained-tonal" style={{ marginTop: 10 }} onPress={() => adicionarItem("habilidades")}>{t("addSkill")}</Button>
+              <Button icon="plus-circle" mode="contained-tonal" style={{ marginTop: 10 }} onPress={() => adicionarItem("hardSkills")}>{t("addHardSkill")}</Button>
+              
+              <Divider style={{ marginVertical: 20 }}/>
+
+              <Title>{t("softSkills")}</Title>
+              {(curriculo.softSkills || []).map((item, index) => (
+                <View key={`soft-${index}`} style={styles.itemContainer}>
+                  <TextInput label={t("skill")} placeholder={t("placeholder_softSkill")} value={item.habilidade} onChangeText={(text) => handleInputChange("softSkills", "habilidade", text, index)} mode="outlined" style={styles.input} />
+                  <Button icon="delete" textColor="#E53935" onPress={() => removerItem("softSkills", index)} style={styles.deleteButton}>{t("remove")}</Button>
+                </View>
+              ))}
+              <Button icon="plus-circle" mode="contained-tonal" style={{ marginTop: 10 }} onPress={() => adicionarItem("softSkills")}>{t("addSoftSkill")}</Button>
             </View>
           </List.Accordion>
         </Card>
@@ -342,7 +355,7 @@ export default function TelaFormulario({ navigation, route }) {
             <View style={styles.accordionContent}>
               {(curriculo.idiomas || []).map((item, index) => (
                 <View key={index} style={styles.itemContainer}>
-                  <TextInput label={t("language")} placeholder="Ex: Inglês" value={item.idioma} onChangeText={(text) => handleInputChange("idiomas", "idioma", text, index)} mode="outlined" style={styles.input} />
+                  <TextInput label={t("language")} placeholder={t("placeholder_language")} value={item.idioma} onChangeText={(text) => handleInputChange("idiomas", "idioma", text, index)} mode="outlined" style={styles.input} />
                   <CustomDropDown label={t("languageLevel")} value={item.nivel} setValue={(val) => handleInputChange("idiomas", "nivel", val, index)} list={languageLevels} />
                   <Button icon="delete" textColor="#E53935" onPress={() => removerItem("idiomas", index)} style={styles.deleteButton}>{t("remove")}</Button>
                 </View>
