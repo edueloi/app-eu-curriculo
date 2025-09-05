@@ -1,254 +1,156 @@
-// src/screens/TelaTutoriais.js
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, Linking } from "react-native";
-import {
-  Card,
-  Title,
-  Paragraph,
-  useTheme,
-  List,
-  Button,
-  Checkbox,
-  Divider,
-} from "react-native-paper";
+import React, { useState, useEffect, useContext } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { Card, Title, Paragraph, useTheme, List, Button, Checkbox, Text } from "react-native-paper";
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Animatable from 'react-native-animatable';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserPreferencesContext } from "../context/UserPreferencesContext";
+import { gerarPDF } from "../utils/pdfGenerator";
+
+// Conteúdo de exemplo para os guias em PDF
+const tutorialPDFs = {
+  summary: { dadosPessoais: { nome: "Guia - Resumo Profissional" }, resumoProfissional: "Conteúdo completo do guia sobre como escrever um resumo profissional..." },
+  experience: { dadosPessoais: { nome: "Guia - Descrevendo Experiências" }, resumoProfissional: "Conteúdo completo do guia sobre como transformar tarefas em resultados..." },
+  skills: { dadosPessoais: { nome: "Guia - Habilidades e Competências" }, resumoProfissional: "Conteúdo completo do guia sobre Hard e Soft skills..." },
+};
 
 export default function TelaTutoriais() {
   const theme = useTheme();
+  const { t } = useContext(UserPreferencesContext);
   const styles = createStyles(theme);
 
-  const abrirLink = (url) => {
-    Linking.openURL(url).catch((err) =>
-      console.error("Erro ao abrir link", err)
-    );
-  };
-
-  // Checklists interativos
   const [checked, setChecked] = useState({});
-  const toggleCheck = (id) => {
-    setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  useEffect(() => {
+    const loadCheckedState = async () => {
+      const savedState = await AsyncStorage.getItem('checklist_tutoriais');
+      if (savedState) setChecked(JSON.parse(savedState));
+    };
+    loadCheckedState();
+  }, []);
+
+  const toggleCheck = async (id) => {
+    const newState = { ...checked, [id]: !checked[id] };
+    setChecked(newState);
+    await AsyncStorage.setItem('checklist_tutoriais', JSON.stringify(newState));
   };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContent} style={styles.container}>
-      <Title style={styles.title}>📚 Tutoriais & Guias</Title>
-
-      {/* INTRO */}
-      <Card style={styles.card}>
-        <Card.Content>
-          <Paragraph style={styles.paragraph}>
-            Bem-vindo à área de aprendizado! Aqui você encontra dicas práticas,
-            guias passo a passo e recomendações para criar um currículo
-            profissional de alto impacto.
-          </Paragraph>
-        </Card.Content>
-      </Card>
-
-      {/* MÓDULO 1 */}
-      <List.Section>
-        <List.Accordion
-          title="1. Resumo Profissional"
-          description="Sua introdução em poucas linhas"
-          left={(props) => <List.Icon {...props} icon="account-badge" />}
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.secondary]}
+        style={styles.header}
+      >
+        <Animatable.Text animation="fadeInDown" style={styles.title}>📚 {t("tutorialsTitle")}</Animatable.Text>
+        <Animatable.Text animation="fadeInUp" delay={200} style={styles.subtitle}>{t("tutorialsDescription")}</Animatable.Text>
+      </LinearGradient>
+      
+      <View style={styles.content}>
+        <TutorialCard
+          title={t("summaryModuleTitle")}
+          description={t("summaryModuleDesc")}
+          icon="account-star-outline"
+          delay={100}
         >
-          <Card style={styles.innerCard}>
-            <Card.Content>
-              <Paragraph style={styles.sectionText}>
-                O resumo deve ser um trailer do seu currículo: direto e impactante.
-              </Paragraph>
-              <Divider style={{ marginVertical: 8 }} />
-              <List.Item
-                title="Escreva em 3 a 5 linhas"
-                left={() => (
-                  <Checkbox
-                    status={checked["resumo1"] ? "checked" : "unchecked"}
-                    onPress={() => toggleCheck("resumo1")}
-                  />
-                )}
-              />
-              <List.Item
-                title="Inclua conquistas reais"
-                left={() => (
-                  <Checkbox
-                    status={checked["resumo2"] ? "checked" : "unchecked"}
-                    onPress={() => toggleCheck("resumo2")}
-                  />
-                )}
-              />
-              <List.Item
-                title="Use palavras-chave da sua área"
-                left={() => (
-                  <Checkbox
-                    status={checked["resumo3"] ? "checked" : "unchecked"}
-                    onPress={() => toggleCheck("resumo3")}
-                  />
-                )}
-              />
-              <List.Item
-                title="Evite frases vagas como 'proativo' ou 'dinâmico' sem contexto"
-                left={() => (
-                  <Checkbox
-                    status={checked["resumo4"] ? "checked" : "unchecked"}
-                    onPress={() => toggleCheck("resumo4")}
-                  />
-                )}
-              />
-              <Button
-                mode="outlined"
-                icon="youtube"
-                style={styles.button}
-                onPress={() =>
-                  abrirLink(
-                    "https://www.youtube.com/results?search_query=resumo+curriculo"
-                  )
-                }
-              >
-                Assistir Tutorial no YouTube
-              </Button>
-            </Card.Content>
-          </Card>
-        </List.Accordion>
+          <Paragraph style={styles.sectionText}>{t("summaryModuleContent")}</Paragraph>
+          <ChecklistItem id="resumo1" text={t("summaryCheck1")} checked={checked["resumo1"]} onPress={toggleCheck} />
+          <ChecklistItem id="resumo2" text={t("summaryCheck2")} checked={checked["resumo2"]} onPress={toggleCheck} />
+          <ChecklistItem id="resumo3" text={t("summaryCheck3")} checked={checked["resumo3"]} onPress={toggleCheck} />
+          <Button
+            mode="contained"
+            icon="download-outline"
+            style={styles.button}
+            onPress={() => gerarPDF(tutorialPDFs.summary, 'classic')}>
+            {t("downloadGuide")}
+          </Button>
+        </TutorialCard>
 
-        {/* MÓDULO 2 */}
-        <List.Accordion
-          title="2. Experiências Profissionais"
-          description="Como descrever cargos e resultados"
-          left={(props) => <List.Icon {...props} icon="briefcase" />}
+        <TutorialCard
+          title={t("experienceModuleTitle")}
+          description={t("experienceModuleDesc")}
+          icon="briefcase-edit-outline"
+          delay={200}
         >
-          <Card style={styles.innerCard}>
-            <Card.Content>
-              <Paragraph style={styles.sectionText}>
-                Destaque resultados alcançados, não apenas responsabilidades.
-              </Paragraph>
-              <Divider style={{ marginVertical: 8 }} />
-              <Paragraph style={styles.tip}>
-                ✔ Prefira: "Aumentei as vendas em 20% em 6 meses."
-              </Paragraph>
-              <Paragraph style={styles.tip}>
-                ❌ Evite: "Responsável por vendas."
-              </Paragraph>
-              <Paragraph style={styles.tip}>
-                ✔ Formate períodos corretamente: "Jan/2020 – Dez/2022"
-              </Paragraph>
-              <Button
-                mode="outlined"
-                icon="open-in-new"
-                style={styles.button}
-                onPress={() =>
-                  abrirLink(
-                    "https://rockcontent.com/br/blog/como-descrever-experiencias-curriculo/"
-                  )
-                }
-              >
-                Ler Guia Completo
-              </Button>
-            </Card.Content>
-          </Card>
-        </List.Accordion>
+          <Paragraph style={styles.sectionText}>{t("experienceModuleContent")}</Paragraph>
+          <ChecklistItem id="exp1" text={t("experienceCheck1")} checked={checked["exp1"]} onPress={toggleCheck} />
+          <ChecklistItem id="exp2" text={t("experienceCheck2")} checked={checked["exp2"]} onPress={toggleCheck} />
+          <ChecklistItem id="exp3" text={t("experienceCheck3")} checked={checked["exp3"]} onPress={toggleCheck} />
+           <Button
+            mode="contained"
+            icon="download-outline"
+            style={styles.button}
+            onPress={() => gerarPDF(tutorialPDFs.experience, 'classic')}>
+            {t("downloadGuide")}
+          </Button>
+        </TutorialCard>
+        
+        <TutorialCard 
+          title={t("skillsModuleTitle")} 
+          description={t("skillsModuleDesc")} 
+          icon="star-outline" 
+          delay={300}
+        >
+            <Paragraph style={styles.sectionText}>{t("skillsModuleContent")}</Paragraph>
+            <ChecklistItem id="skill1" text={t("skillsCheck1")} checked={checked["skill1"]} onPress={toggleCheck} />
+            <ChecklistItem id="skill2" text={t("skillsCheck2")} checked={checked["skill2"]} onPress={toggleCheck} />
+            <ChecklistItem id="skill3" text={t("skillsCheck3")} checked={checked["skill3"]} onPress={toggleCheck} />
+            <Button
+              mode="contained"
+              icon="download-outline"
+              style={styles.button}
+              onPress={() => gerarPDF(tutorialPDFs.skills, 'classic')}>
+              {t("downloadGuide")}
+            </Button>
+        </TutorialCard>
 
-        {/* MÓDULO 3 */}
-        <List.Accordion
-          title="3. Habilidades e Competências"
-          description="Equilibre Hard Skills e Soft Skills"
-          left={(props) => <List.Icon {...props} icon="star" />}
+        <TutorialCard 
+            title={t("commonErrorsTitle")} 
+            description={t("commonErrorsDesc")} 
+            icon="alert-circle-outline" 
+            delay={400}
         >
-          <Card style={styles.innerCard}>
-            <Card.Content>
-              <Paragraph style={styles.sectionText}>
-                Liste habilidades técnicas e comportamentais.
-              </Paragraph>
-              <Divider style={{ marginVertical: 8 }} />
-              <Paragraph>🔹 Hard Skills: React, Excel, Inglês</Paragraph>
-              <Paragraph>🔹 Soft Skills: Comunicação, Liderança, Trabalho em Equipe</Paragraph>
-              <Paragraph style={styles.tip}>
-                ✔ Mantenha equilíbrio: 50% técnicas, 50% comportamentais
-              </Paragraph>
-            </Card.Content>
-          </Card>
-        </List.Accordion>
-
-        {/* MÓDULO 4 */}
-        <List.Accordion
-          title="4. Formação Acadêmica"
-          description="Como organizar seus estudos"
-          left={(props) => <List.Icon {...props} icon="school" />}
-        >
-          <Card style={styles.innerCard}>
-            <Card.Content>
-              <Paragraph style={styles.sectionText}>
-                Inclua apenas formações relevantes para a vaga.
-              </Paragraph>
-              <Paragraph>
-                ✔ Graduação, pós, cursos técnicos e certificações
-              </Paragraph>
-              <Paragraph>
-                ✔ Cursos online de peso (Coursera, Udemy, Alura, etc.)
-              </Paragraph>
-              <Paragraph>
-                ❌ Não é necessário listar ensino fundamental/médio (exceto se
-                for sua formação máxima).
-              </Paragraph>
-            </Card.Content>
-          </Card>
-        </List.Accordion>
-
-        {/* MÓDULO 5 */}
-        <List.Accordion
-          title="5. Erros Comuns a Evitar"
-          description="Revise antes de enviar!"
-          left={(props) => <List.Icon {...props} icon="alert-circle" />}
-        >
-          <Card style={styles.innerCard}>
-            <Card.Content>
-              <Paragraph style={styles.tip}>❌ Erros de português</Paragraph>
-              <Paragraph style={styles.tip}>❌ Informações falsas ou exageradas</Paragraph>
-              <Paragraph style={styles.tip}>
-                ❌ Currículo com mais de 2 páginas (na maioria dos casos)
-              </Paragraph>
-              <Paragraph style={styles.tip}>❌ Usar e-mail pouco profissional</Paragraph>
-              <Paragraph style={styles.tip}>❌ Fotos inadequadas ou de baixa qualidade</Paragraph>
-            </Card.Content>
-          </Card>
-        </List.Accordion>
-
-        {/* MÓDULO 6 - NOVO */}
-        <List.Accordion
-          title="6. Design e Layout"
-          description="Organização visual também conta"
-          left={(props) => <List.Icon {...props} icon="palette" />}
-        >
-          <Card style={styles.innerCard}>
-            <Card.Content>
-              <Paragraph style={styles.sectionText}>
-                A estética influencia a primeira impressão do recrutador.
-              </Paragraph>
-              <Paragraph>✔ Prefira fontes legíveis (Arial, Poppins, Roboto)</Paragraph>
-              <Paragraph>✔ Use cores com contraste moderado</Paragraph>
-              <Paragraph>✔ Espaçamento adequado entre seções</Paragraph>
-            </Card.Content>
-          </Card>
-        </List.Accordion>
-
-        {/* MÓDULO 7 - NOVO */}
-        <List.Accordion
-          title="7. Links e Portfólio"
-          description="Mostre seus trabalhos na prática"
-          left={(props) => <List.Icon {...props} icon="link" />}
-        >
-          <Card style={styles.innerCard}>
-            <Card.Content>
-              <Paragraph style={styles.sectionText}>
-                Inclua links apenas se forem profissionais e relevantes.
-              </Paragraph>
-              <Paragraph>✔ LinkedIn atualizado</Paragraph>
-              <Paragraph>✔ Portfólio online ou GitHub</Paragraph>
-              <Paragraph>❌ Evite links pessoais irrelevantes (Facebook, TikTok pessoal)</Paragraph>
-            </Card.Content>
-          </Card>
-        </List.Accordion>
-      </List.Section>
+            <Paragraph style={styles.sectionText}>{t("errorsModuleContent")}</Paragraph>
+            <ChecklistItem id="err1" text={t("errorCheck1")} checked={checked["err1"]} onPress={toggleCheck} />
+            <ChecklistItem id="err2" text={t("errorCheck2")} checked={checked["err2"]} onPress={toggleCheck} />
+            <ChecklistItem id="err3" text={t("errorCheck3")} checked={checked["err3"]} onPress={toggleCheck} />
+            <ChecklistItem id="err4" text={t("errorCheck4")} checked={checked["err4"]} onPress={toggleCheck} />
+            <ChecklistItem id="err5" text={t("errorCheck5")} checked={checked["err5"]} onPress={toggleCheck} />
+        </TutorialCard>
+      </View>
     </ScrollView>
   );
 }
+
+const TutorialCard = ({ title, description, icon, delay, children }) => {
+  const theme = useTheme();
+  const styles = createStyles(theme);
+  return (
+    <Animatable.View animation="fadeInUp" duration={600} delay={delay}>
+      <List.Accordion
+        title={title}
+        description={description}
+        titleStyle={styles.accordionTitle}
+        descriptionStyle={styles.accordionDescription}
+        style={styles.accordion}
+        left={(props) => <List.Icon {...props} icon={icon} color={theme.colors.primary} />}
+      >
+        <View style={styles.innerContent}>
+          {children}
+        </View>
+      </List.Accordion>
+    </Animatable.View>
+  );
+};
+
+const ChecklistItem = ({ id, text, checked, onPress }) => (
+    <List.Item
+        title={text}
+        titleNumberOfLines={3}
+        left={() => <Checkbox status={checked ? "checked" : "unchecked"} onPress={() => onPress(id)} />}
+        onPress={() => onPress(id)}
+    />
+);
+
 
 const createStyles = (theme) =>
   StyleSheet.create({
@@ -257,42 +159,55 @@ const createStyles = (theme) =>
       backgroundColor: theme.colors.background,
     },
     scrollContent: {
-      padding: 16,
-      paddingBottom: 100, // evita cortar no final
+      paddingBottom: 40,
+    },
+    header: {
+      padding: 24,
+      paddingTop: 48,
+      borderBottomLeftRadius: 32,
+      borderBottomRightRadius: 32,
     },
     title: {
-      fontSize: 22,
+      fontSize: 26,
       fontWeight: "bold",
-      marginBottom: 16,
+      color: "#fff",
       textAlign: "center",
-      color: theme.colors.primary,
     },
-    card: {
-      marginBottom: 16,
-      backgroundColor: theme.colors.surface,
-      borderRadius: 12,
+    subtitle: {
+      fontSize: 16,
+      color: "rgba(255, 255, 255, 0.8)",
+      textAlign: "center",
+      marginTop: 8,
     },
-    innerCard: {
-      margin: 8,
-      backgroundColor: theme.colors.surfaceVariant || "#f9f9f9",
-      borderRadius: 8,
-      paddingBottom: 8,
+    content: {
+      padding: 16,
     },
-    paragraph: {
-      marginBottom: 8,
-      fontSize: 15,
-      color: theme.colors.onSurfaceVariant,
+    accordion: {
+        backgroundColor: theme.colors.surface,
+        borderRadius: 16,
+        marginBottom: 12,
+        elevation: 3,
+    },
+    accordionTitle: {
+        fontWeight: 'bold',
+        fontSize: 18,
+    },
+    accordionDescription: {
+        fontSize: 14,
+        opacity: 0.7
+    },
+    innerContent: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
     },
     sectionText: {
-      fontWeight: "600",
-      marginBottom: 6,
-      fontSize: 14,
+      marginBottom: 12,
+      fontSize: 15,
+      lineHeight: 22,
+      color: theme.colors.onSurfaceVariant,
     },
     button: {
-      marginTop: 12,
-    },
-    tip: {
-      marginBottom: 6,
-      fontSize: 14,
+      marginTop: 16,
+      alignSelf: 'flex-start'
     },
   });

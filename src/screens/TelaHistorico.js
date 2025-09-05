@@ -1,179 +1,164 @@
-// src/screens/TelaHistorico.js
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import React, { useState, useCallback, useContext } from "react";
+import { StyleSheet, View, FlatList } from "react-native";
 import {
-  Card,
-  Title,
-  Paragraph,
-  useTheme,
-  List,
-  Button,
-  Divider,
+  Card, Title, Paragraph, useTheme, List, Button, Menu, Avatar, Text, Chip
 } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Animatable from 'react-native-animatable';
+import { UserPreferencesContext } from "../context/UserPreferencesContext";
 import { gerarPDF } from "../utils/pdfGenerator";
-import { EXEMPLOS_CURRICULOS } from "../data/exemplosCurriculos";
 
-export default function TelaHistorico() {
+// Helper para mapear IDs de template para ícones e cores
+const templateInfo = {
+  classic: { icon: 'file-document-outline', color: '#424242' },
+  creative: { icon: 'creation', color: '#EF5350' },
+  corporate: { icon: 'briefcase-outline', color: '#42A5F5' },
+  elegant: { icon: 'flower-tulip-outline', color: '#EC407A' },
+  default: { icon: 'file-question-outline', color: '#9E9E9E' }
+};
+
+export default function TelaHistorico({ navigation }) {
   const theme = useTheme();
-  const navigation = useNavigation();
+  const { t } = useContext(UserPreferencesContext);
   const styles = createStyles(theme);
 
-  const [historico, setHistorico] = useState([
-    {
-      id: 1,
-      nome: "Currículo Ana Souza.pdf",
-      data: "01/09/2025",
-      tamanho: "250 KB",
-      status: "Exportado",
-      curriculo: EXEMPLOS_CURRICULOS[0], // 🔹 associa dados reais
-      template: "marketing",
-    },
-    {
-      id: 2,
-      nome: "Currículo Carlos Oliveira.pdf",
-      data: "28/08/2025",
-      tamanho: "310 KB",
-      status: "Exportado",
-      curriculo: EXEMPLOS_CURRICULOS[1],
-      template: "blueProfessional",
-    },
-    {
-      id: 3,
-      nome: "Currículo Juliana Martins.pdf",
-      data: "20/08/2025",
-      tamanho: "280 KB",
-      status: "Reexportado",
-      curriculo: EXEMPLOS_CURRICULOS[2],
-      template: "pink",
-    },
-  ]);
+  const [historico, setHistorico] = useState([]);
+  const [menuVisivel, setMenuVisivel] = useState({});
 
-  const deletarRegistro = (id) => {
-    setHistorico((prev) => prev.filter((item) => item.id !== id));
+  useFocusEffect(
+    useCallback(() => {
+      carregarHistorico();
+    }, [])
+  );
+
+  const carregarHistorico = async () => {
+    try {
+      const data = await AsyncStorage.getItem('historico_pdfs');
+      setHistorico(data ? JSON.parse(data) : []);
+    } catch (e) {
+      console.error("Erro ao carregar histórico:", e);
+    }
   };
 
-  const visualizar = (item) => {
-    navigation.navigate("PreviewCurriculo", {
-      curriculo: item.curriculo,
-      template: item.template,
-    });
+  const deletarRegistro = async (id) => {
+    const novaLista = historico.filter((item) => item.id !== id);
+    setHistorico(novaLista);
+    await AsyncStorage.setItem('historico_pdfs', JSON.stringify(novaLista));
   };
+  
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
 
-  const reexportar = (item) => {
-    gerarPDF(item.curriculo, item.template);
+  const renderItem = ({ item, index }) => {
+    const info = templateInfo[item.templateId] || templateInfo.default;
+    
+    return (
+      <Animatable.View animation="fadeInUp" duration={600} delay={index * 100}>
+        <Card style={styles.card}>
+          <Card.Content style={styles.cardContent}>
+            <Avatar.Icon size={48} icon={info.icon} style={{ backgroundColor: info.color }} color="#fff" />
+            <View style={styles.textContainer}>
+              <Text style={styles.cardTitle} numberOfLines={1}>{item.nome}</Text>
+              <Paragraph style={styles.cardSubtitle}>{formatDate(item.data)}</Paragraph>
+            </View>
+            <Menu
+              visible={menuVisivel[item.id]}
+              onDismiss={() => setMenuVisivel({ ...menuVisivel, [item.id]: false })}
+              anchor={
+                <Button icon="dots-vertical" onPress={() => setMenuVisivel({ ...menuVisivel, [item.id]: true })} />
+              }>
+              <Menu.Item onPress={() => { navigation.navigate("PreviewCurriculo", { curriculo: item.curriculo, templateId: item.templateId }); setMenuVisivel({}); }} title={t("view")} leadingIcon="eye-outline" />
+              <Menu.Item onPress={() => { gerarPDF(item.curriculo, item.templateId); setMenuVisivel({}); }} title={t("reExport")} leadingIcon="refresh" />
+              <Menu.Item onPress={() => { deletarRegistro(item.id); setMenuVisivel({}); }} title={t("delete")} titleStyle={{color: theme.colors.error}} leadingIcon="delete-outline" />
+            </Menu>
+          </Card.Content>
+        </Card>
+      </Animatable.View>
+    );
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Title style={styles.title}>📑 Histórico de Exportações</Title>
-
+    <View style={styles.container}>
       {historico.length === 0 ? (
-        <Paragraph style={styles.empty}>
-          Nenhum currículo exportado ainda.
-        </Paragraph>
+        <View style={styles.emptyContainer}>
+            <Animatable.View animation="pulse" easing="ease-out" iterationCount="infinite">
+                <List.Icon icon="history" size={80} color={theme.colors.onSurfaceDisabled} />
+            </Animatable.View>
+            <Title style={styles.emptyTitle}>{t("noExportsYet")}</Title>
+            <Paragraph style={styles.emptyText}>{t("exportToGetStarted")}</Paragraph>
+        </View>
       ) : (
-        historico.map((item) => (
-          <Card key={item.id} style={styles.card}>
-            <List.Item
-              title={item.nome}
-              description={`📅 ${item.data}   •   💾 ${item.tamanho}`}
-              left={(props) => <List.Icon {...props} icon="file-pdf-box" />}
-              right={() => (
-                <Paragraph
-                  style={[
-                    styles.status,
-                    {
-                      color:
-                        item.status === "Exportado"
-                          ? theme.colors.primary
-                          : theme.colors.secondary,
-                    },
-                  ]}
-                >
-                  {item.status}
-                </Paragraph>
-              )}
-            />
-
-            <Divider />
-
-            <View style={styles.actions}>
-              <Button
-                mode="outlined"
-                icon="eye"
-                compact
-                style={styles.actionButton}
-                onPress={() => visualizar(item)}
-              >
-                Visualizar
-              </Button>
-              <Button
-                mode="outlined"
-                icon="refresh"
-                compact
-                style={styles.actionButton}
-                onPress={() => reexportar(item)}
-              >
-                Reexportar
-              </Button>
-              <Button
-                mode="contained"
-                icon="delete"
-                compact
-                style={[styles.actionButton, { backgroundColor: theme.colors.error }]}
-                labelStyle={{ color: "#fff" }}
-                onPress={() => deletarRegistro(item.id)}
-              >
-                Deletar
-              </Button>
-            </View>
-          </Card>
-        ))
+        <FlatList
+            ListHeaderComponent={<Title style={styles.pageTitle}>📑 {t("exportHistory")}</Title>}
+            data={historico}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={{padding: 16}}
+        />
       )}
-    </ScrollView>
+    </View>
   );
 }
 
 const createStyles = (theme) =>
   StyleSheet.create({
     container: {
-      padding: 16,
+      flex: 1,
       backgroundColor: theme.colors.background,
-      paddingBottom: 60,
     },
-    title: {
-      fontSize: 22,
+    pageTitle: {
+      fontSize: 24,
       fontWeight: "bold",
-      marginBottom: 16,
+      marginBottom: 24,
       textAlign: "center",
-      color: theme.colors.primary,
+      color: theme.colors.onSurface,
     },
     card: {
       marginBottom: 16,
+      borderRadius: 16,
       backgroundColor: theme.colors.surface,
-      borderRadius: 12,
       elevation: 3,
     },
-    actions: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      padding: 10,
+    cardContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
     },
-    actionButton: {
+    textContainer: {
       flex: 1,
-      marginHorizontal: 4,
+      marginLeft: 16,
+      justifyContent: 'center',
     },
-    status: {
-      fontSize: 13,
-      fontWeight: "600",
-      marginRight: 10,
-      alignSelf: "center",
+    cardTitle: {
+      fontWeight: 'bold',
+      fontSize: 16,
+      color: theme.colors.onSurface,
     },
-    empty: {
+    cardSubtitle: {
+      fontSize: 12,
+      color: theme.colors.onSurfaceVariant,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyTitle: {
+        marginTop: 24,
+        fontSize: 22,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    emptyText: {
       textAlign: "center",
-      marginTop: 40,
       fontSize: 16,
       color: theme.colors.onSurfaceVariant,
+      marginTop: 8,
     },
   });

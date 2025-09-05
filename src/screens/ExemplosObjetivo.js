@@ -1,17 +1,7 @@
 import React, { useState, useMemo, useContext } from "react";
 import { StyleSheet, View, FlatList } from "react-native";
 import {
-  Appbar,
-  List,
-  Card,
-  Button,
-  Dialog,
-  Portal,
-  Paragraph,
-  Searchbar,
-  Text,
-  useTheme,
-  Title,
+  Appbar, List, Card, Button, Dialog, Portal, Paragraph, Searchbar, Text, useTheme, Title
 } from "react-native-paper";
 import * as Animatable from "react-native-animatable";
 import * as Haptics from "expo-haptics";
@@ -77,14 +67,14 @@ export default function ExemplosObjetivo({ navigation, route }) {
             <Card
               style={[
                 styles.card,
-                selecionado === frase && styles.cardSelected,
+                selecionado === frase && styles.cardSelected, // Estilo dinâmico de seleção
               ]}
               onPress={() => confirmarSelecao(frase)}
             >
               <Card.Content style={styles.cardContent}>
                 <List.Icon
                   icon="format-quote-open"
-                  color={theme.colors.primary}
+                  color={selecionado === frase ? theme.colors.primary : theme.colors.onSurfaceVariant}
                   style={styles.quoteIcon}
                 />
                 <Paragraph style={styles.cardText}>{frase}</Paragraph>
@@ -97,8 +87,7 @@ export default function ExemplosObjetivo({ navigation, route }) {
   );
 
   return (
-    <>
-      {/* 🔹 Appbar */}
+    <View style={styles.screenContainer}>
       <Appbar.Header style={styles.appbar}>
         <Appbar.BackAction
           onPress={() => navigation.goBack()}
@@ -111,50 +100,50 @@ export default function ExemplosObjetivo({ navigation, route }) {
         <Appbar.Action icon="lightbulb-on-outline" color={theme.colors.primary} />
       </Appbar.Header>
 
-      {/* 🔹 Header destacado */}
-      <LinearGradient colors={["#7C4DFF", "#448AFF"]} style={styles.gradient}>
-        <Title style={styles.headerTitle}>{t("inspirationTitle")}</Title>
-        <Paragraph style={styles.headerSubtitle}>
-          {t("inspirationSubtitle")}
-        </Paragraph>
-        <Searchbar
-          placeholder={t("filterPlaceholder")}
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-          icon="magnify"
-        />
-      </LinearGradient>
-
-      {/* 🔹 Lista */}
-      <View style={styles.container}>
-        <FlatList
-          data={filteredData}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.area}
-          contentContainerStyle={styles.listContent}
-          keyboardShouldPersistTaps="handled"
-          ListEmptyComponent={
-            <View style={styles.emptyStateContainer}>
-              <Animatable.View
-                animation="pulse"
-                easing="ease-out"
-                iterationCount="infinite"
-              >
-                <List.Icon
-                  icon="emoticon-sad-outline"
-                  size={70}
-                  color={theme.colors.disabled}
-                />
-              </Animatable.View>
-              <Text style={styles.emptyStateText}>{t("noAreaFound")}</Text>
-              <Paragraph>{t("tryDifferentSearch")}</Paragraph>
-            </View>
-          }
-        />
+      <View style={styles.headerContainer}>
+          <LinearGradient 
+            colors={[theme.colors.primary, theme.colors.secondary]} 
+            style={styles.gradient}
+          >
+            <Title style={styles.headerTitle}>{t("inspirationTitle")}</Title>
+            <Paragraph style={styles.headerSubtitle}>
+              {t("inspirationSubtitle")}
+            </Paragraph>
+            <Searchbar
+              placeholder={t("filterPlaceholder")}
+              onChangeText={setSearchQuery}
+              value={searchQuery}
+              style={styles.searchbar}
+              icon="magnify"
+            />
+          </LinearGradient>
       </View>
 
-      {/* 🔹 Dialog */}
+      <FlatList
+        data={filteredData}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.area}
+        contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          <View style={styles.emptyStateContainer}>
+            <Animatable.View
+              animation="pulse"
+              easing="ease-out"
+              iterationCount="infinite"
+            >
+              <List.Icon
+                icon="emoticon-sad-outline"
+                size={70}
+                color={theme.colors.onSurfaceDisabled}
+              />
+            </Animatable.View>
+            <Text style={styles.emptyStateText}>{t("noAreaFound")}</Text>
+            <Paragraph>{t("tryDifferentSearch")}</Paragraph>
+          </View>
+        }
+      />
+
       <Portal>
         <Dialog
           visible={dialogVisible}
@@ -176,21 +165,24 @@ export default function ExemplosObjetivo({ navigation, route }) {
           </Dialog.Actions>
         </Dialog>
       </Portal>
-    </>
+    </View>
   );
 }
 
 const getStyles = (theme) =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.colors.background },
-    appbar: { backgroundColor: theme.colors.surface, elevation: 2 },
+    screenContainer: { flex: 1, backgroundColor: theme.colors.background },
+    appbar: { backgroundColor: theme.colors.surface, elevation: 0 },
     appbarTitle: { fontWeight: "bold", color: theme.colors.onSurface },
+    headerContainer: {
+        backgroundColor: theme.colors.surface,
+    },
     gradient: {
       padding: 20,
-      paddingBottom: 32,
+      paddingBottom: 24,
       borderBottomLeftRadius: 32,
       borderBottomRightRadius: 32,
-      elevation: 6,
+      elevation: 4,
     },
     headerTitle: {
       fontSize: 26,
@@ -200,19 +192,19 @@ const getStyles = (theme) =>
     },
     headerSubtitle: {
       fontSize: 16,
-      color: "#EDE7F6",
+      color: "rgba(255, 255, 255, 0.8)",
       marginBottom: 16,
       textAlign: "center",
     },
     searchbar: {
       borderRadius: 30,
-      backgroundColor: "#fff",
+      backgroundColor: theme.colors.surface,
       elevation: 2,
-      marginTop: 10,
     },
     listContent: { 
       paddingHorizontal: 16, 
-      paddingBottom: 46
+      paddingTop: 16, // Espaçamento do topo
+      paddingBottom: 48
     },
     accordion: {
       backgroundColor: theme.colors.surface,
@@ -229,15 +221,14 @@ const getStyles = (theme) =>
       marginVertical: 6,
       marginHorizontal: 12,
       borderRadius: 12,
-      backgroundColor: "#FAFAFA",
-      elevation: 1,
+      backgroundColor: theme.colors.surfaceVariant,
     },
     cardSelected: {
       borderWidth: 2,
       borderColor: theme.colors.primary,
-      backgroundColor: "#EDE7F6",
+      backgroundColor: theme.colors.primaryContainer,
     },
-    cardContent: { flexDirection: "row", alignItems: "center" },
+    cardContent: { flexDirection: "row", alignItems: "center", paddingRight: 8 },
     quoteIcon: { marginRight: 8 },
     cardText: {
       flex: 1,
@@ -249,13 +240,14 @@ const getStyles = (theme) =>
       fontStyle: "italic",
       fontWeight: "bold",
       color: theme.colors.primary,
+      textAlign: 'center',
     },
     emptyStateContainer: {
       flex: 1,
       alignItems: "center",
       justifyContent: "center",
       padding: 32,
-      marginTop: 64,
+      marginTop: 48,
     },
     emptyStateText: {
       fontSize: 18,

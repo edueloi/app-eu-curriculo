@@ -1,140 +1,143 @@
 import React, { useContext } from "react";
-import { StyleSheet, ScrollView, View } from "react-native";
-import { Card, Title, Paragraph, Button } from "react-native-paper";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { StyleSheet, ScrollView, View, Linking } from "react-native";
+import { Title, Paragraph, Card, Button, useTheme, List, Avatar } from "react-native-paper";
 import { UserPreferencesContext } from "../context/UserPreferencesContext";
-import { Linking } from "react-native";
+import * as Animatable from 'react-native-animatable';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SupportScreen() {
+  const theme = useTheme();
   const { t } = useContext(UserPreferencesContext);
+  const styles = createStyles(theme);
+
+  const faqs = [
+    { key: "faq1", icon: "file-document-edit-outline" },
+    { key: "faq2", icon: "folder-multiple-outline" },
+    { key: "faq3", icon: "account-off-outline" },
+    { key: "faq4", icon: "alert-circle-outline", color: theme.colors.error },
+    { key: "faq5", icon: "cloud-upload-outline" },
+    { key: "faq6", icon: "wifi-off" },
+  ];
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* FAQ - Perguntas Frequentes */}
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title style={styles.title}>{t("faqTitle")}</Title>
+    <ScrollView contentContainerStyle={styles.scrollContainer} style={{backgroundColor: theme.colors.background}}>
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.secondary]}
+        style={styles.header}
+      >
+        <Animatable.View animation="fadeInDown" duration={800}>
+          <List.Icon icon="help-circle-outline" color="#fff" style={{alignSelf: 'center'}} size={60} />
+          <Title style={styles.headerTitle}>{t("supportContact")}</Title>
+        </Animatable.View>
+      </LinearGradient>
 
-          {/* FAQ 1 */}
-          <View style={styles.faqItem}>
-            <MaterialCommunityIcons name="file-document-outline" size={22} color="#6200ee" />
-            <Paragraph style={styles.question}>{t("faq1")}</Paragraph>
-          </View>
-          <Paragraph style={styles.answer}>{t("faq1Answer")}</Paragraph>
-
-          {/* FAQ 2 */}
-          <View style={styles.faqItem}>
-            <MaterialCommunityIcons name="folder-outline" size={22} color="#6200ee" />
-            <Paragraph style={styles.question}>{t("faq2")}</Paragraph>
-          </View>
-          <Paragraph style={styles.answer}>{t("faq2Answer")}</Paragraph>
-
-          {/* FAQ 3 */}
-          <View style={styles.faqItem}>
-            <MaterialCommunityIcons name="account-off-outline" size={22} color="#6200ee" />
-            <Paragraph style={styles.question}>{t("faq3")}</Paragraph>
-          </View>
-          <Paragraph style={styles.answer}>{t("faq3Answer")}</Paragraph>
-
-          {/* FAQ 4 */}
-          <View style={styles.faqItem}>
-            <MaterialCommunityIcons name="alert-circle-outline" size={22} color="#e53935" />
-            <Paragraph style={styles.question}>{t("faq4")}</Paragraph>
-          </View>
-          <Paragraph style={styles.answerImportant}>{t("faq4Answer")}</Paragraph>
-
-          {/* FAQ 5 */}
-          <View style={styles.faqItem}>
-            <MaterialCommunityIcons name="cloud-upload-outline" size={22} color="#6200ee" />
-            <Paragraph style={styles.question}>{t("faq5")}</Paragraph>
-          </View>
-          <Paragraph style={styles.answer}>{t("faq5Answer")}</Paragraph>
-
-          {/* FAQ 6 */}
-          <View style={styles.faqItem}>
-            <MaterialCommunityIcons name="wifi-off" size={22} color="#6200ee" />
-            <Paragraph style={styles.question}>{t("faq6")}</Paragraph>
-          </View>
-          <Paragraph style={styles.answer}>{t("faq6Answer")}</Paragraph>
-        </Card.Content>
-      </Card>
-
-      {/* Contato */}
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title style={styles.title}>{t("supportContact")}</Title>
-          <Paragraph style={styles.text}>{t("contactDescription")}</Paragraph>
-          <Button
-            mode="contained"
-            style={styles.button}
-            icon="email"
-            labelStyle={{ fontSize: 15, fontWeight: "600" }}
-            onPress={() => Linking.openURL("mailto:gerador.curriculo.eloitech@gmail.com")}
-          >
-            {t("contactEmail")}
-          </Button>
-        </Card.Content>
-      </Card>
+      <View style={styles.content}>
+        <Animatable.View animation="fadeInUp" duration={800} delay={200}>
+          <Card style={styles.card}>
+            <Card.Content style={styles.contactContent}>
+              <Paragraph style={styles.text}>{t("contactDescription")}</Paragraph>
+              <Button
+                mode="contained"
+                icon="email-outline"
+                style={styles.button}
+                onPress={() => Linking.openURL("mailto:eloitech.app.meucurriculo@gmail.com.br")}
+              >
+                {t("contactEmail")}
+              </Button>
+            </Card.Content>
+          </Card>
+        </Animatable.View>
+        
+        <Animatable.View animation="fadeInUp" duration={800} delay={300}>
+          <Title style={styles.sectionTitle}>{t("faqTitle")}</Title>
+          <Card style={styles.card}>
+            <List.AccordionGroup>
+              {faqs.map((faq) => (
+                <List.Accordion 
+                  key={faq.key} 
+                  id={faq.key} 
+                  title={t(faq.key)}
+                  titleStyle={styles.question}
+                  left={props => <List.Icon {...props} icon={faq.icon} color={faq.color || theme.colors.primary} />}
+                >
+                  <Paragraph style={[styles.answer, faq.key === 'faq4' && styles.answerImportant]}>
+                    {t(`${faq.key}Answer`)}
+                  </Paragraph>
+                </List.Accordion>
+              ))}
+            </List.AccordionGroup>
+          </Card>
+        </Animatable.View>
+      </View>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
+const createStyles = (theme) => StyleSheet.create({
+  scrollContainer: {
     paddingBottom: 40,
-    backgroundColor: "#f5f6fa",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  header: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+    paddingTop: 56,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    marginTop: 12,
+  },
+  content: {
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: theme.colors.onBackground,
+    marginBottom: 16,
+    marginTop: 8,
   },
   card: {
-    marginBottom: 20,
+    marginBottom: 24,
     borderRadius: 16,
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.surface,
     elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 15,
-    color: "#222",
-  },
-  faqItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 12,
-  },
-  question: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginLeft: 8,
-    color: "#333",
-  },
-  answer: {
-    fontSize: 14,
-    marginTop: 4,
-    marginBottom: 10,
-    color: "#555",
-    lineHeight: 20,
-  },
-  answerImportant: {
-    fontSize: 14,
-    marginTop: 4,
-    marginBottom: 10,
-    color: "#e53935",
-    fontWeight: "bold",
-    lineHeight: 20,
+  contactContent: {
+      alignItems: 'center',
   },
   text: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+    color: theme.colors.onSurfaceVariant,
+  },
+  question: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: theme.colors.onSurface,
+  },
+  answer: {
     fontSize: 15,
-    marginBottom: 10,
-    color: "#444",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    lineHeight: 22,
+    color: theme.colors.onSurfaceVariant,
+  },
+  answerImportant: {
+    color: theme.colors.error,
+    fontWeight: 'bold',
   },
   button: {
-    marginTop: 12,
-    borderRadius: 25,
-    paddingVertical: 6,
+    marginTop: 20,
   },
 });

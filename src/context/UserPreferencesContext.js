@@ -11,7 +11,7 @@ export const UserPreferencesProvider = ({ children }) => {
   const [profile, setProfile] = useState({
     nome: "Seu Nome",
     email: "email@exemplo.com",
-    foto: "https://i.pravatar.cc/150",
+    foto: null,
     profissao: "Profissional",
   });
 

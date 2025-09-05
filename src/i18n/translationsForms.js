@@ -1,6 +1,7 @@
 export const translationsForms = {
   "pt-BR": {
     personalData: "Dados Pessoais",
+    internalResumeName: 'Nome do Currículo (Interno)', 
     resumeSummary: "Resumo e Objetivo",
     professionalExperience: "Experiência Profissional",
     education: "Formação Acadêmica",
@@ -17,6 +18,7 @@ export const translationsForms = {
     course: "Curso",
     institution: "Instituição",
     yearConclusion: "Data de Conclusão",
+    getExamples: 'Adicionar Exemplo Objetivo',
     position: "Cargo",
     company: "Empresa",
     activities: "Principais Atividades",
@@ -96,6 +98,7 @@ export const translationsForms = {
   },
   en: {
     personalData: "Personal Data",
+    internalResumeName: 'Curriculum Name (Internal)', 
     resumeSummary: "Summary and Objective",
     professionalExperience: "Professional Experience",
     education: "Education",
@@ -188,9 +191,12 @@ export const translationsForms = {
     remove: "Remove",
     gallery: "Gallery",
     camera: "Camera",
+    getExamples: 'Add Objective Example',
   },
   es: {
     personalData: "Datos Personales",
+    getExamples: 'Agregar ejemplo objetivo',
+    internalResumeName: 'Nombre del plan de estudios (interno)', 
     resumeSummary: "Resumen y Objetivo",
     professionalExperience: "Experiencia Profesional",
     education: "Educación",
