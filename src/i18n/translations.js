@@ -4,6 +4,21 @@ export const translations = {
   "pt-BR": {
     ...translationsForms["pt-BR"],
     supportContact: "Suporte & Contacto",
+    welcome_title_1: "Bem-vindo ao Criador de Currículos",
+    welcome_text_1:
+      "Crie documentos profissionais e modernos em poucos minutos.",
+    welcome_title_2: "Personalização Total",
+    welcome_text_2:
+      "Escolha templates, cores e fontes para um currículo único.",
+    welcome_title_3: "Exporte e Partilhe",
+    welcome_text_3:
+      "Gere o seu currículo em PDF com um toque e envie para as melhores vagas.",
+    welcome_title_4: "Tudo Pronto para o Sucesso!",
+    welcome_text_4:
+      "Vamos juntos conquistar a sua próxima grande oportunidade. 🙏",
+    skip: "Pular",
+    next: "Próximo",
+    startNow: "Começar Agora",
     linkedinTip1:
       "Use uma foto de perfil profissional e um título que descreva sua área de atuação.",
     linkedinTip2:
@@ -303,6 +318,19 @@ export const translations = {
   en: {
     ...translationsForms["en"],
     recommendedSites: "Recommended Sites",
+    welcome_title_1: "Welcome to the Resume Builder",
+    welcome_text_1:
+      "Create professional and modern documents in just a few minutes.",
+    welcome_title_2: "Total Customization",
+    welcome_text_2: "Choose templates, colors, and fonts for a unique resume.",
+    welcome_title_3: "Export and Share",
+    welcome_text_3:
+      "Generate your resume as a PDF with one tap and send it to the best jobs.",
+    welcome_title_4: "All Set for Success!",
+    welcome_text_4: "Let's conquer your next great opportunity together. 🙏",
+    skip: "Skip",
+    next: "Next",
+    startNow: "Start Now",
     linkedinTip1:
       "Use a professional profile picture and a headline that describes your field.",
     linkedinTip2:
@@ -855,6 +883,20 @@ export const translations = {
       "Mantente enfocado en la información más relevante para el reclutador.",
     tip30: "Recuerda: tu currículum es tu herramienta de marketing personal.",
     recommendedSites: "Sitios Recomendados",
+    welcome_title_1: "Bienvenido al Creador de Currículums",
+    welcome_text_1:
+      "Crea documentos profesionales y modernos en pocos minutos.",
+    welcome_title_2: "Personalización Total",
+    welcome_text_2:
+      "Elige plantillas, colores y fuentes para un currículum único.",
+    welcome_title_3: "Exporta y Comparte",
+    welcome_text_3:
+      "Genera tu currículum en PDF con un toque y envíalo a las mejores vacantes.",
+    welcome_title_4: "¡Todo Listo para el Éxito!",
+    welcome_text_4: "Vamos a conquistar juntos tu próxima gran oportunidad. 🙏",
+    skip: "Saltar",
+    next: "Siguiente",
+    startNow: "Empezar Ahora",
     sitesDescription:
       "Explora las mejores plataformas para encontrar tu próxima oportunidad laboral.",
     linkedinName: "LinkedIn",

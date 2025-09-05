@@ -12,7 +12,7 @@ import WelcomeScreen from "./src/screens/WelcomeScreen";
 const AppContent = () => {
   const { theme } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
-  const [isFirstLaunch, setIsFirstLaunch] = useState(null);
+ const [isFirstLaunch, setIsFirstLaunch] = useState(null); 
 
   useEffect(() => {
     const checkWelcome = async () => {
