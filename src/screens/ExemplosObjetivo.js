@@ -26,11 +26,12 @@ export default function ExemplosObjetivo({ navigation, route }) {
 
   const aplicarExemplo = () => {
     if (selecionado) {
-      route.params?.onSelect(selecionado);
+      route.params?.onSelect(selecionado); // chama direto o callback
     }
     setDialogVisible(false);
-    navigation.goBack();
+    navigation.goBack(); // apenas fecha o modal
   };
+
 
   const filteredData = useMemo(() => {
     const data = Object.entries(translationsFormsExemple)

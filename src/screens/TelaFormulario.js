@@ -1,4 +1,4 @@
-import React, { useState, useContext, useCallback } from "react";
+import React, { useState, useContext, useCallback, useLayoutEffect } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -74,28 +74,37 @@ export default function TelaFormulario({ navigation, route }) {
 
   const indexEdicao = route.params?.index ?? null;
 
-  useFocusEffect(
-    useCallback(() => {
-      const curriculoParaEditar = route.params?.curriculo;
-      const objetivoSelecionado = route.params?.objetivoSelecionado;
-      
-      if (curriculoParaEditar) {
-        const curriculoCarregado = { ...ESTRUTURA_INICIAL, ...curriculoParaEditar };
-        if (!curriculoCarregado.certificacoes) curriculoCarregado.certificacoes = ESTRUTURA_INICIAL.certificacoes;
-        if (!curriculoCarregado.hardSkills) curriculoCarregado.hardSkills = ESTRUTURA_INICIAL.hardSkills;
-        if (!curriculoCarregado.softSkills) curriculoCarregado.softSkills = ESTRUTURA_INICIAL.softSkills;
-        setCurriculo(curriculoCarregado);
-      } else {
-        setCurriculo(ESTRUTURA_INICIAL);
-      }
-      
-      if (objetivoSelecionado) {
-        setCurriculo(prev => ({ ...prev, objetivoProfissional: objetivoSelecionado }));
-        navigation.setParams({ objetivoSelecionado: null });
-      }
-      
-    }, [route.params?.curriculo, route.params?.objetivoSelecionado])
-  );
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: indexEdicao !== null ? t("editResume") : t("createResume"),
+    });
+  }, [navigation, indexEdicao, t]);
+
+   useFocusEffect(
+  useCallback(() => {
+    const curriculoParaEditar = route.params?.curriculo;
+    const objetivoSelecionado = route.params?.objetivoSelecionado;
+
+    // Só carrega dados na 1ª vez (quando não há objetivo vindo do exemplo)
+    if (curriculoParaEditar && !objetivoSelecionado) {
+      const curriculoCarregado = { ...ESTRUTURA_INICIAL, ...curriculoParaEditar };
+      setCurriculo(curriculoCarregado);
+    }
+
+    if (objetivoSelecionado) {
+      setCurriculo((prev) => ({
+        ...prev,
+        objetivoProfissional: "", // limpa antes
+      }));
+      setCurriculo((prev) => ({
+        ...prev,
+        objetivoProfissional: objetivoSelecionado, // aplica novo
+      }));
+      navigation.setParams({ objetivoSelecionado: null });
+    }
+  }, [route.params?.curriculo, route.params?.objetivoSelecionado])
+);
+
 
   const handleAccordionPress = (secao) =>
     setSecaoAberta(secaoAberta === secao ? null : secao);

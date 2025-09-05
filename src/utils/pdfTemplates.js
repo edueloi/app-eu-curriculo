@@ -25,47 +25,81 @@ const gerarListaHTML = (items, template) => {
 // ==================================================
 // 1. TEMPLATE CLÁSSICO (ID: 'classic')
 // ==================================================
-export const templateClassic = (curriculo, corPrimaria = '#2d3748') => `
+export const templateClassic = (curriculo, corPrimaria = "#2d3748") => `
 <html>
 <head>
   <meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Lato', sans-serif; color: #4a5568; font-size: 11pt; }
+    body { font-family: 'Lato', sans-serif; color: #333; font-size: 11pt; margin: 30px; }
     .header { text-align: center; border-bottom: 2px solid ${corPrimaria}; padding-bottom: 10px; margin-bottom: 25px; }
-    h1 { margin: 0; font-size: 26pt; color: ${corPrimaria}; font-weight: 700; }
-    .contato { font-size: 9pt; color: #718096; margin-top: 5px; }
-    .section-title { font-size: 14pt; font-weight: 700; color: ${corPrimaria}; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+    h1 { margin: 0; font-size: 22pt; color: ${corPrimaria}; font-weight: 700; }
+    .contato { font-size: 10pt; color: #555; margin-top: 5px; }
+    .section-title { font-size: 13pt; font-weight: 700; color: ${corPrimaria}; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
     .job { margin-bottom: 15px; }
-    .job-title { font-weight: 700; font-size: 12pt; color: #2d3748; }
-    .job-period { color: #718096; font-size: 9pt; font-style: italic; margin-bottom: 5px; }
-    p { margin: 5px 0; line-height: 1.5; }
-    ul { padding-left: 20px; } li { margin-bottom: 5px; }
+    .job-title { font-weight: 700; font-size: 11pt; }
+    .job-period { color: #666; font-size: 9pt; font-style: italic; margin-bottom: 5px; }
+    p { margin: 4px 0; line-height: 1.4; }
+    ul { padding-left: 18px; } li { margin-bottom: 4px; }
   </style>
 </head>
 <body>
   <div class="header">
+    ${curriculo.fotoBase64 ? `<img src="${curriculo.fotoBase64}" width="90" style="border-radius:50%; margin-bottom:10px;" />` : ""}
     <h1>${curriculo.dadosPessoais?.nome || "Seu Nome Completo"}</h1>
-    <p class="contato">${curriculo.dadosPessoais?.email || ""} ${curriculo.dadosPessoais?.telefone ? `• ${curriculo.dadosPessoais.telefone}` : ""} ${curriculo.dadosPessoais?.linkedin ? `• LinkedIn` : ""}</p>
+    <p class="contato">
+      ${curriculo.dadosPessoais?.email || ""}
+      ${curriculo.dadosPessoais?.telefone ? ` • ${curriculo.dadosPessoais.telefone}` : ""}
+      ${curriculo.dadosPessoais?.cidade ? ` • ${curriculo.dadosPessoais.cidade}/${curriculo.dadosPessoais.estado}` : ""}
+      ${curriculo.dadosPessoais?.linkedin ? ` • ${curriculo.dadosPessoais.linkedin}` : ""}
+      ${curriculo.dadosPessoais?.site ? ` • ${curriculo.dadosPessoais.site}` : ""}
+    </p>
   </div>
-  ${curriculo.resumoProfissional ? `<div class="section-title">Resumo Profissional</div><p>${curriculo.resumoProfissional}</p>` : ''}
-  
-  <div class="section-title">Experiência Profissional</div>
-  ${(curriculo.experiencias || []).map(exp => `
-    <div class="job">
-      <p class="job-title">${exp.cargo || ""} em ${exp.empresa || ""}</p>
-      <p class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</p>
-      <p>${exp.atividades || ""}</p>
-    </div>
-  `).join("")}
 
+  ${curriculo.resumoProfissional ? `
+  <div class="section-title">Resumo Profissional</div>
+  <p>${curriculo.resumoProfissional}</p>` : ''}
+
+  ${curriculo.objetivoProfissional ? `
+  <div class="section-title">Objetivo</div>
+  <p>${curriculo.objetivoProfissional}</p>` : ''}
+
+  ${(curriculo.experiencias && curriculo.experiencias.length > 0) ? `
+  <div class="section-title">Experiência Profissional</div>
+  ${curriculo.experiencias.map(exp => `
+    <div class="job">
+      <p class="job-title">${exp.cargo || ""} – ${exp.empresa || ""}</p>
+      <p class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</p>
+      ${exp.atividades ? `<p>${exp.atividades}</p>` : ""}
+    </div>
+  `).join("")}` : ""}
+
+  ${(curriculo.formacao && curriculo.formacao.length > 0) ? `
   <div class="section-title">Formação Acadêmica</div>
-  ${(curriculo.formacao || []).map(f => `<p><b>${f.curso || ""}</b> (${f.nivel || ""}) – ${f.instituicao || ""}, ${formatDate(f.anoConclusao)}</p>`).join("")}
-  
-  <div class="section-title">Habilidades</div>
-  ${gerarListaHTML(curriculo.habilidades, h => `<li>${h.habilidade} (${h.nivel})</li>`)}
+  ${curriculo.formacao.map(f => `
+    <p><b>${f.curso || ""}</b> (${f.nivel || ""}) – ${f.instituicao || ""} ${f.anoConclusao ? `, Concluído em ${formatDate(f.anoConclusao)}` : ""}</p>
+  `).join("")}` : ""}
+
+  ${(curriculo.certificacoes && curriculo.certificacoes.length > 0) ? `
+  <div class="section-title">Cursos e Certificações</div>
+  ${curriculo.certificacoes.map(c => `
+    <p>${c.nome || ""} – ${c.instituicao || ""} ${c.anoConclusao ? `(${formatDate(c.anoConclusao)})` : ""}</p>
+  `).join("")}` : ""}
+
+  ${(curriculo.hardSkills && curriculo.hardSkills.length > 0) ? `
+  <div class="section-title">Hard Skills</div>
+  <ul>${curriculo.hardSkills.map(h => `<li>${h.habilidade}</li>`).join("")}</ul>` : ""}
+
+  ${(curriculo.softSkills && curriculo.softSkills.length > 0) ? `
+  <div class="section-title">Soft Skills</div>
+  <ul>${curriculo.softSkills.map(s => `<li>${s.habilidade}</li>`).join("")}</ul>` : ""}
+
+  ${(curriculo.idiomas && curriculo.idiomas.length > 0) ? `
+  <div class="section-title">Idiomas</div>
+  ${curriculo.idiomas.map(i => `<p>${i.idioma} – ${i.nivel}</p>`).join("")}` : ""}
 </body>
-</html>`;
+</html>
+`;
 
 // ==================================================
 // 2. TEMPLATE CRIATIVO (ID: 'creative')

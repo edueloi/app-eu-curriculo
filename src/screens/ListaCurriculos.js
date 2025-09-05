@@ -102,7 +102,7 @@ export default function ListaCurriculos({ navigation }) {
                 mode="contained"
                 icon="plus"
                 style={{marginTop: 20}}
-                onPress={() => navigation.navigate("CriarCurrículo")}
+                onPress={() => navigation.navigate("CriarCurrculo")}
             >
                 {t("createResume")}
             </Button>
