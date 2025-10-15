@@ -3,8 +3,10 @@ import { translationsForms } from "./translationsForms";
 export const translations = {
   "pt-BR": {
     ...translationsForms["pt-BR"],
-    addHardSkill: 'Adicionar Hard Skill',
-    addSoftSkill: 'Adicionar Soft Skill',
+    addHardSkill: "Adicionar Hard Skill",
+    noResumesYet: "Ainda não há currículos",
+    createOneNow: "Crie um agora",
+    addSoftSkill: "Adicionar Soft Skill",
     supportContact: "Suporte & Contacto",
     placeholder_internalResumeName: "Ex: Vaga de Desenvolvedor na Empresa X",
     placeholder_fullName: "Ex: Maria Joaquina da Silva",
@@ -13,8 +15,7 @@ export const translations = {
     placeholder_city: "Ex: São Paulo",
     placeholder_linkedin: "Ex: linkedin.com/in/seu-perfil",
     placeholder_portfolio: "Ex: github.com/seu-usuario",
-    placeholder_summary:
-      "Ex: Técnico de Informática",
+    placeholder_summary: "Ex: Técnico de Informática",
     placeholder_objective:
       "Ex: Busco uma oportunidade desafiadora na área de gestão de projetos...",
     placeholder_course: "Ex: Bacharelado em Engenharia de Software",
@@ -602,8 +603,8 @@ export const translations = {
     summaryCheck3: "Use keywords from your field",
     experienceModuleTitle: "Describing Experiences",
     experienceModuleDesc: "Turn tasks into results.",
-    addHardSkill: 'Add Hard Skill',
-    addSoftSkill: 'Add Soft Skill',
+    addHardSkill: "Add Hard Skill",
+    addSoftSkill: "Add Soft Skill",
     experienceModuleContent:
       "Don't just list your responsibilities. Show the impact you made, preferably with numbers and practical examples.",
     downloadGuide: "Download PDF Guide",
@@ -670,7 +671,8 @@ export const translations = {
     placeholder_hardSkill: "Ex: JavaScript, Figma, Power BI",
     placeholder_softSkill: "Ex: Leadership, Assertive Communication",
     placeholder_language: "Ex: English",
-
+    noResumesYet: "No resumes yet",
+    createOneNow: "Create one now",
     blogTips: "Blog Tips",
     blogTipsDesc: "Articles to boost your career.",
     continueWhereYouLeftOff: "Continue Where You Left Off",
@@ -894,6 +896,8 @@ export const translations = {
     tip1: "Sé claro y objetivo en tu resumen profesional.",
     tip2: "Destaca resultados y logros en tus experiencias.",
     acknowledgmentsTitle: "Agradecimientos y Motivación",
+    noResumesYet: "Aún no hay currículums",
+    createOneNow: "crear uno ahora",
     motivationalMessage:
       "Sabemos que la búsqueda de una nueva oportunidad está llena de desafíos. Esta aplicación fue creada con el sincero deseo de ser una herramienta para facilitar tu viaje. Que te ayude a conseguir el trabajo de tus sueños. ¡Dios te bendiga!",
     specialThanks:
@@ -1053,8 +1057,8 @@ export const translations = {
     article6Category: "ESTRATEGIA",
     article7Category: "PORTAFOLIO",
     article8Category: "PRIMER EMPLEO",
-    addHardSkill: 'Agregar Hard Skill',
-    addSoftSkill: 'Agregar Soft Skill',
+    addHardSkill: "Agregar Hard Skill",
+    addSoftSkill: "Agregar Soft Skill",
     articleScreenTitle: "Artículo",
     tip8: "Cuantifica tus logros siempre que sea posible (ej: 'aumenté las ventas en un 20%').",
     tip9: "Usa una dirección de correo electrónico que parezca profesional (ej: nombre.apellido@email.com).",

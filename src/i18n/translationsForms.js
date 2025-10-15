@@ -2,8 +2,8 @@ export const translationsForms = {
   "pt-BR": {
     personalData: "Dados Pessoais",
     coursesCertifications: "Cursos e Certificações",
-    hardSkills: "Competências Técnicas (Hard Skills)",
-    softSkills: "Competências Comportamentais (Soft Skills)",
+    hardSkills: "Habilidades",
+    softSkills: "Competências",
     competencies: "Competências",
     courseName: "Nome do Curso ou Certificação",
     issuingOrganization: "Organização Emissora",

@@ -5,6 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Animatable from 'react-native-animatable';
 import { UserPreferencesContext } from "../context/UserPreferencesContext";
+import { curriculosExemplo } from '../utils/exemplosCurriculos'; // 1. Importamos os exemplos
 
 export default function ListaCurriculos({ navigation }) {
   const theme = useTheme();
@@ -25,6 +26,12 @@ export default function ListaCurriculos({ navigation }) {
     setCurriculos(data ? JSON.parse(data) : []);
   };
 
+  // 2. NOVA FUNÇÃO para carregar os exemplos
+  const carregarExemplos = async () => {
+    await AsyncStorage.setItem("curriculos", JSON.stringify(curriculosExemplo));
+    carregarCurriculos(); // Recarrega a lista da tela
+  };
+
   const excluirCurriculo = (index) => {
     Alert.alert(t("deleteResumeTitle"), t("deleteResumeConfirm"), [
       { text: t("cancel"), style: "cancel" },
@@ -35,14 +42,13 @@ export default function ListaCurriculos({ navigation }) {
           const novos = curriculos.filter((_, i) => i !== index);
           setCurriculos(novos);
           await AsyncStorage.setItem("curriculos", JSON.stringify(novos));
-          setSnackbarVisible(true); // Mostra o feedback de sucesso
+          setSnackbarVisible(true);
         },
       },
-      // BOTÃO NOVO NO ALERTA
       {
-          text: t("goToHome"),
-          onPress: () => navigation.navigate("Início"),
-          style: "default"
+        text: t("goToHome"),
+        onPress: () => navigation.navigate("Início"),
+        style: "default"
       }
     ]);
   };
@@ -102,9 +108,18 @@ export default function ListaCurriculos({ navigation }) {
                 mode="contained"
                 icon="plus"
                 style={{marginTop: 20}}
-                onPress={() => navigation.navigate("CriarCurrculo")}
+                onPress={() => navigation.navigate("CriarCurrículo")}
             >
                 {t("createResume")}
+            </Button>
+            {/* 3. BOTÃO para carregar exemplos */}
+            <Button
+              mode="text"
+              icon="lightbulb-on-outline"
+              style={{marginTop: 16}}
+              onPress={carregarExemplos}
+            >
+              Carregar currículos de exemplo
             </Button>
         </View>
       ) : (

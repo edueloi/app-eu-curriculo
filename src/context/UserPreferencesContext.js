@@ -9,7 +9,7 @@ export const UserPreferencesProvider = ({ children }) => {
   const [fontSize, setFontSize] = useState("medium");
 
   const [profile, setProfile] = useState({
-    nome: "Seu Nome",
+    nome: "Usuário",
     email: "email@exemplo.com",
     foto: null,
     profissao: "Profissional",

@@ -6,7 +6,7 @@ export const UserProfileContext = createContext();
 
 export const UserProfileProvider = ({ children }) => {
   const [profile, setProfile] = useState({
-    nome: "Seu Nome",
+    nome: "Usuário",
     idade: "",
     profissao: "",
     foto: null,
