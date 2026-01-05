@@ -389,6 +389,9 @@ export const translations = {
     exportToGetStarted: "Exporte um PDF para ver o seu histórico aqui.",
     reExport: "Reexportar",
     view: "Visualizar",
+    loadExampleResumes: "Carregar currículos de exemplo",
+    resetAccountTitle: "Resetar Conta",
+    resetAccountMessage: "Você tem certeza que deseja resetar sua conta? Todos os seus dados, incluindo currículos e preferências, serão perdidos.",
     // Chaves para o alerta de exclusão (reaproveitadas de ListaCurriculos)
     deleteResumeTitle: "Excluir Registo",
     deleteResumeConfirm:
@@ -762,6 +765,8 @@ export const translations = {
     article4Title: "Salary negotiation: How to ask for a raise",
     article4Category: "CAREER",
     readArticle: "Read Article",
+    resetAccountTitle: "Reset Account",
+    resetAccountMessage: "Are you sure you want to reset your account? All your data, including resumes and preferences, will be lost.",
     // ...
   },
 
@@ -1132,6 +1137,9 @@ export const translations = {
     indeedTip2: "Sube tu currículum para postularte rápidamente.",
     indeedTip3: "Investiga las reseñas de las empresas antes de postularte.",
     accessSite: "Acceder al Sitio",
+    loadExampleResumes: "Cargar currículos de ejemplo",
+    resetAccountTitle: "Restablecer Cuenta",
+    resetAccountMessage: "¿Estás seguro de que quieres restablecer tu cuenta? Todos tus datos, incluidos los currículos y las preferencias, se perderán.",
     // ...
   },
 };

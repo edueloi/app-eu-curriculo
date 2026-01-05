@@ -7,7 +7,13 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 import { createStackNavigator } from "@react-navigation/stack";
-import { Title, Paragraph, Avatar, useTheme, Divider } from "react-native-paper";
+import {
+  Title,
+  Paragraph,
+  Avatar,
+  useTheme,
+  Divider,
+} from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -31,12 +37,12 @@ function CustomDrawerContent(props) {
   const { t, profile } = useContext(UserPreferencesContext);
   const styles = createStyles(theme);
 
+  // Cores do gradiente - você pode ajustar aqui!
+  const gradientColors = [theme.colors.primary, '#00264D']; // Do primário para um azul bem escuro
+
   return (
     <View style={styles.drawerContainer}>
-      <LinearGradient
-        colors={[theme.colors.primary, theme.colors.secondary]}
-        style={styles.drawerHeader}
-      >
+      <LinearGradient colors={gradientColors} style={styles.drawerHeader}>
         {profile?.foto ? (
           <Avatar.Image
             size={80}
@@ -56,7 +62,7 @@ function CustomDrawerContent(props) {
         </Paragraph>
       </LinearGradient>
 
-      <DrawerContentScrollView {...props} style={{ paddingTop: 8 }}>
+      <DrawerContentScrollView {...props} style={styles.drawerScrollView}>
         <DrawerItemList {...props} />
         <Divider style={styles.separator} />
         <DrawerItem
@@ -74,6 +80,9 @@ function CustomDrawerContent(props) {
           style={styles.createButtonDrawerItem}
         />
       </DrawerContentScrollView>
+      <View style={styles.footer}>
+        <Paragraph style={styles.footerText}>App Currículos v1.0</Paragraph>
+      </View>
     </View>
   );
 }
@@ -98,7 +107,7 @@ export function AppNavigator() {
         drawerActiveBackgroundColor: theme.colors.primary,
         drawerInactiveTintColor: theme.colors.onSurfaceVariant,
         drawerLabelStyle: {
-          marginLeft: 0,
+          marginLeft: 0, // Alinha o texto com o ícone
           fontSize: 15,
           fontWeight: "500",
         },
@@ -136,12 +145,12 @@ export function AppNavigator() {
           ),
         }}
       />
-       <Drawer.Screen
+      <Drawer.Screen
         name="CriarCurrículo"
         component={TelaFormulario}
         options={{
           title: t("editResume"),
-          drawerItemStyle: { display: 'none' } // Escondido da lista principal
+          drawerItemStyle: { display: "none" }, // Escondido da lista principal
         }}
       />
       <Drawer.Screen
@@ -150,7 +159,11 @@ export function AppNavigator() {
         options={{
           title: t("tutorials"),
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="school-outline" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="school-outline"
+              color={color}
+              size={size}
+            />
           ),
         }}
       />
@@ -170,7 +183,11 @@ export function AppNavigator() {
         options={{
           title: t("settings"),
           drawerIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="cog-outline" color={color} size={size} />
+            <MaterialCommunityIcons
+              name="cog-outline"
+              color={color}
+              size={size}
+            />
           ),
         }}
       />
@@ -219,7 +236,7 @@ const createStyles = (theme) =>
       borderBottomLeftRadius: 28,
       borderBottomRightRadius: 28,
     },
-    avatar: {
+   avatar: {
       borderWidth: 4,
       borderColor: "rgba(255,255,255,0.25)",
       marginBottom: 12,
@@ -233,7 +250,10 @@ const createStyles = (theme) =>
     },
     drawerSubtitle: {
       fontSize: 14,
-      color: "rgba(255,255,255,0.8)",
+      color: "rgba(255,255,255,0.85)",
+    },
+    drawerScrollView: {
+      paddingTop: 12,
     },
     separator: {
       height: 1,
@@ -243,7 +263,7 @@ const createStyles = (theme) =>
     },
     createButtonDrawerItem: {
       marginHorizontal: 16,
-      backgroundColor: theme.colors.surfaceVariant,
+      backgroundColor: theme.colors.primary,
       borderRadius: 12,
     },
     createButtonIconWrapper: {
@@ -255,9 +275,19 @@ const createStyles = (theme) =>
       marginLeft: 0,
     },
     createButtonLabel: {
-      color: theme.colors.primary,
+      color: theme.colors.onPrimary,
       fontSize: 16,
       fontWeight: "bold",
-      marginLeft: 0,
+      marginLeft: 0, // Alinha o texto com o ícone
+    },
+    footer: {
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.outlineVariant,
+      padding: 16,
+    },
+    footerText: {
+      textAlign: "center",
+      color: theme.colors.onSurfaceVariant,
+      fontSize: 12,
     },
   });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { StyleSheet, View, ScrollView, Platform, Dimensions } from "react-native";
 import { Button, Title, useTheme } from "react-native-paper";
 import { WebView } from "react-native-webview";
@@ -14,6 +14,8 @@ import {
   templateSplit,
   templateDark,
 } from "../utils/pdfTemplates";
+import { UserPreferencesContext } from '../context/UserPreferencesContext';
+
 
 const A4_RATIO = 1.4142;
 const { width: screenWidth } = Dimensions.get('window');
@@ -25,35 +27,37 @@ export default function PreviewCurriculo({ route, navigation }) {
   const [htmlContent, setHtmlContent] = useState("");
   const [webViewHeight, setWebViewHeight] = useState(PREVIEW_WIDTH * A4_RATIO);
   const styles = createStyles(theme);
+  const { t } = useContext(UserPreferencesContext);
+
 
   useEffect(() => {
     switch (template) {
       case "creative":
-        setHtmlContent(templateCreative(curriculo));
+        setHtmlContent(templateCreative(curriculo, theme.colors.primary, t));
         break;
       case "corporate":
-        setHtmlContent(templateCorporate(curriculo));
+        setHtmlContent(templateCorporate(curriculo, theme.colors.primary, t));
         break;
       case "elegant":
-        setHtmlContent(templateElegant(curriculo));
+        setHtmlContent(templateElegant(curriculo, theme.colors.primary, t));
         break;
       case "minimalist":
-        setHtmlContent(templateMinimalist(curriculo));
+        setHtmlContent(templateMinimalist(curriculo, theme.colors.primary, t));
         break;
       case "inverted":
-        setHtmlContent(templateInverted(curriculo));
+        setHtmlContent(templateInverted(curriculo, theme.colors.primary, t));
         break;
       case "split":
-        setHtmlContent(templateSplit(curriculo));
+        setHtmlContent(templateSplit(curriculo, theme.colors.primary, t));
         break;
       case "dark":
-        setHtmlContent(templateDark(curriculo));
+        setHtmlContent(templateDark(curriculo, theme.colors.primary, t));
         break;
       case "classic":
       default:
-        setHtmlContent(templateClassic(curriculo));
+        setHtmlContent(templateClassic(curriculo, theme.colors.primary, t));
     }
-  }, [curriculo, template]);
+  }, [curriculo, template, t]);
   
   const onMessage = (event) => {
     // Ajusta a altura do WebView com base no conteúdo do HTML
@@ -75,7 +79,7 @@ export default function PreviewCurriculo({ route, navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Title style={styles.title}>Pré-visualização ({template})</Title>
+        <Title style={styles.title}>{curriculo.nomeInterno}</Title>
         <ScrollView contentContainerStyle={styles.previewContainer}>
           <WebView
             originWhitelist={["*"]}
@@ -92,7 +96,7 @@ export default function PreviewCurriculo({ route, navigation }) {
           <Button mode="outlined" icon="arrow-left" style={styles.button} onPress={() => navigation.goBack()}>
             Voltar
           </Button>
-          <Button mode="contained" icon="file-pdf-box" style={styles.button} onPress={() => gerarPDF(curriculo, template)}>
+          <Button mode="contained" icon="file-pdf-box" style={styles.button} onPress={() => gerarPDF(curriculo, template, theme.colors.primary, t)}>
             Exportar PDF
           </Button>
         </View>

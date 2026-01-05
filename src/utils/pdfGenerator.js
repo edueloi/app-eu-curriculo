@@ -36,35 +36,35 @@ const adicionarAoHistorico = async (curriculo, templateId) => {
 };
 
 // 2. FUNÇÃO PRINCIPAL ATUALIZADA: Agora aceita cor e conhece todos os templates
-export async function gerarPDF(curriculo, templateId = "classic", corPrimaria) {
+export async function gerarPDF(curriculo, templateId = "classic", corPrimaria, t) {
   try {
     let htmlContent = "";
 
     // Switch atualizado com todos os 8 templates e passando a cor primária
     switch (templateId) {
       case "creative":
-        htmlContent = templateCreative(curriculo, corPrimaria);
+        htmlContent = templateCreative(curriculo, corPrimaria, t);
         break;
       case "corporate":
-        htmlContent = templateCorporate(curriculo, corPrimaria);
+        htmlContent = templateCorporate(curriculo, corPrimaria, t);
         break;
       case "elegant":
-        htmlContent = templateElegant(curriculo, corPrimaria);
+        htmlContent = templateElegant(curriculo, corPrimaria, t);
         break;
       case "minimalist":
-        htmlContent = templateMinimalist(curriculo, corPrimaria);
+        htmlContent = templateMinimalist(curriculo, corPrimaria, t);
         break;
       case "inverted":
-        htmlContent = templateInverted(curriculo, corPrimaria);
+        htmlContent = templateInverted(curriculo, corPrimaria, t);
         break;
       case "split":
-        htmlContent = templateSplit(curriculo, corPrimaria);
+        htmlContent = templateSplit(curriculo, corPrimaria, t);
         break;
       case "dark":
-        htmlContent = templateDark(curriculo, corPrimaria);
+        htmlContent = templateDark(curriculo, corPrimaria, t);
         break;
       default: // 'classic'
-        htmlContent = templateClassic(curriculo, corPrimaria);
+        htmlContent = templateClassic(curriculo, corPrimaria, t);
     }
 
     const nomeUsuario = curriculo.dadosPessoais?.nome || "Curriculo";

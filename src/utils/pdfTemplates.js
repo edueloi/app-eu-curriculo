@@ -25,21 +25,22 @@ const gerarListaHTML = (items, template) => {
 // ==================================================
 // 1. TEMPLATE CLÁSSICO (ID: 'classic')
 // ==================================================
-export const templateClassic = (curriculo, corPrimaria = "#2d3748") => `
+export const templateClassic = (curriculo, corPrimaria = "#2d3748", t) => `
 <html>
 <head>
   <meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Lato', sans-serif; color: #333; font-size: 11pt; margin: 30px; }
-    .header { text-align: center; border-bottom: 2px solid ${corPrimaria}; padding-bottom: 10px; margin-bottom: 25px; }
-    h1 { margin: 0; font-size: 22pt; color: ${corPrimaria}; font-weight: 700; }
+    @page { size: A4; margin: 0; }
+    body { font-family: 'Lato', sans-serif; color: #333; font-size: 11pt; margin: 0; padding: 20mm; box-sizing: border-box; width: 210mm; height: 297mm; }
+    .header { text-align: center; border-bottom: 2px solid ${corPrimaria}; padding-bottom: 10px; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { margin: 0; font-size: 24pt; color: ${corPrimaria}; font-weight: 700; }
     .contato { font-size: 10pt; color: #555; margin-top: 5px; }
-    .section-title { font-size: 13pt; font-weight: 700; color: ${corPrimaria}; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    .section-title { font-size: 14pt; font-weight: 700; color: ${corPrimaria}; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
     .job { margin-bottom: 15px; }
-    .job-title { font-weight: 700; font-size: 11pt; }
+    .job-title { font-weight: 700; font-size: 12pt; }
     .job-period { color: #666; font-size: 9pt; font-style: italic; margin-bottom: 5px; }
-    p { margin: 4px 0; line-height: 1.4; }
+    p { margin: 4px 0; line-height: 1.5; }
     ul { padding-left: 18px; } li { margin-bottom: 4px; }
   </style>
 </head>
@@ -96,7 +97,7 @@ export const templateClassic = (curriculo, corPrimaria = "#2d3748") => `
 
   ${(curriculo.idiomas && curriculo.idiomas.length > 0) ? `
   <div class="section-title">Idiomas</div>
-  ${curriculo.idiomas.map(i => `<p>${i.idioma} – ${i.nivel}</p>`).join("")}` : ""}
+  ${curriculo.idiomas.map(i => `<p>${i.idioma} – ${t(`languageLevels.${i.nivel}`)}</p>`).join("")}` : ""}
 </body>
 </html>
 `;
@@ -104,7 +105,7 @@ export const templateClassic = (curriculo, corPrimaria = "#2d3748") => `
 // ==================================================
 // 2. TEMPLATE CRIATIVO (ID: 'creative')
 // ==================================================
-export const templateCreative = (curriculo, corPrimaria = '#1f1f1f') => `
+export const templateCreative = (curriculo, corPrimaria = '#1f1f1f', t) => `
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -256,7 +257,7 @@ export const templateCreative = (curriculo, corPrimaria = '#1f1f1f') => `
       <div class="sidebar-section">
         <h3>Idiomas</h3>
         <ul>
-          ${curriculo.idiomas.map(i => `<li>${i.idioma}: ${i.nivel}</li>`).join('')}
+          ${curriculo.idiomas.map(i => `<li>${i.idioma}: ${t(`languageLevels.${i.nivel}`)}</li>`).join('')}
         </ul>
       </div>
     ` : ''}
@@ -312,14 +313,7 @@ export const templateCreative = (curriculo, corPrimaria = '#1f1f1f') => `
 // ==================================================
 // 3. TEMPLATE CORPORATIVO (ID: 'corporate')
 // ==================================================
-// Dentro de src/utils/pdfTemplates.js
-
-// ... (mantenha as outras funções de template e as funções auxiliares no início do arquivo)
-
-// ==================================================
-// 3. TEMPLATE CORPORATIVO (ID: 'corporate') - VERSÃO ATUALIZADA POR VOCÊ
-// ==================================================
-export const templateCorporate = (curriculo, corPrimaria = '#00bcd4') => `
+export const templateCorporate = (curriculo, corPrimaria = '#00bcd4', t) => `
 <html>
 <head>
   <meta charset="UTF-8">
@@ -425,7 +419,7 @@ export const templateCorporate = (curriculo, corPrimaria = '#00bcd4') => `
       </div>
       <div class="sidebar-section">
         <h3>Idiomas</h3>
-        ${(curriculo.idiomas || []).map(i => `<p><strong>${i.idioma}:</strong> ${i.nivel}</p>`).join("")}
+        ${(curriculo.idiomas || []).map(i => `<p><strong>${i.idioma}:</strong> ${t(`languageLevels.${i.nivel}`)}</p>`).join("")}
       </div>
     </aside>
     <main class="content">
@@ -472,24 +466,25 @@ export const templateCorporate = (curriculo, corPrimaria = '#00bcd4') => `
 // ==================================================
 // 4. TEMPLATE ELEGANTE (ID: 'elegant')
 // ==================================================
-export const templateElegant = (curriculo, corPrimaria = '#c2185b') => `
+export const templateElegant = (curriculo, corPrimaria = '#c2185b', t) => `
 <html>
 <head>
   <meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600&family=Poppins:wght@400&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Poppins', sans-serif; display: flex; font-size: 10pt; }
-    .sidebar { width: 35%; background: #fff0f6; padding: 25px; text-align: center; }
+    @page { size: A4; margin: 0; }
+    body { font-family: 'Poppins', sans-serif; display: flex; font-size: 10pt; width: 210mm; height: 297mm; margin: 0; }
+    .sidebar { width: 35%; background: #fff0f6; padding: 25px; text-align: center; box-sizing: border-box; }
     .profile-pic { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 4px solid ${corPrimaria}; margin-bottom: 15px; }
     h1 { font-family: 'Lora', serif; font-size: 22pt; color: ${corPrimaria}; margin: 0; }
     .sidebar p { font-size: 9pt; margin: 4px 0; color: #ad1457; }
     .sidebar-title { font-family: 'Lora', serif; font-size: 13pt; font-weight: 600; color: ${corPrimaria}; text-align: left; margin-top: 25px; margin-bottom: 8px; }
     .sidebar ul { list-style-type: '— '; padding-left: 10px; text-align: left; }
     .sidebar li { font-size: 9pt; margin-bottom: 5px; }
-    .main { flex: 1; padding: 30px; background: #fff; }
-    .main-title { font-family: 'Lora', serif; font-size: 18pt; color: ${corPrimaria}; border-bottom: 2px solid #f8bbd0; padding-bottom: 6px; margin-bottom: 15px; }
+    .main { flex: 1; padding: 30px; background: #fff; box-sizing: border-box; }
+    .main-title { font-family: 'Lora', serif; font-size: 18pt; color: ${corPrimaria}; border-bottom: 2px solid #f8bbd0; padding-bottom: 6px; margin-bottom: 15px; margin-top: 30px; }
     .job { margin-bottom: 18px; }
-    .main p { font-size: 10pt; line-height: 1.6; }
+    .main p { font-size: 10pt; line-height: 1.7; }
   </style>
 </head>
 <body>
@@ -502,18 +497,20 @@ export const templateElegant = (curriculo, corPrimaria = '#c2185b') => `
     <p>${curriculo.dadosPessoais?.telefone || "-"}</p>
     <div class="sidebar-title">Habilidades</div>
     ${gerarListaHTML(curriculo.habilidades, h => `<li>${h.habilidade}</li>`)}
+     <div class="sidebar-title">Idiomas</div>
+    ${(curriculo.idiomas || []).map(i => `<p>${i.idioma} – ${t(`languageLevels.${i.nivel}`)}</p>`).join("")}
   </aside>
   <main class="main">
     <h2 class="main-title">Resumo Profissional</h2>
     <p>${curriculo.resumoProfissional || "-"}</p>
-    <h2 class="main-title" style="margin-top:25px;">Experiência</h2>
+    <h2 class="main-title">Experiência</h2>
     ${(curriculo.experiencias || []).map(exp => `
       <div class="job">
         <p><b>${exp.cargo}</b> - ${exp.empresa} (${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)})</p>
         <p>${exp.atividades}</p>
       </div>
     `).join("")}
-    <h2 class="main-title" style="margin-top:25px;">Formação</h2>
+    <h2 class="main-title">Formação</h2>
     ${(curriculo.formacao || []).map(f => `<p><b>${f.curso}</b> - ${f.instituicao}, ${formatDate(f.anoConclusao)}</p>`).join("")}
   </main>
 </body>
@@ -522,7 +519,7 @@ export const templateElegant = (curriculo, corPrimaria = '#c2185b') => `
 // ==================================================
 // 5. TEMPLATE MINIMALISTA (ID: 'minimalist')
 // ==================================================
-export const templateMinimalist = (curriculo, corPrimaria = '#111827') => {
+export const templateMinimalist = (curriculo, corPrimaria = '#111827', t) => {
   // Helper para renderizar uma seção apenas se ela tiver conteúdo.
   const renderSection = (title, content) => {
     if (!content || content.trim() === '') return '';
@@ -573,10 +570,11 @@ export const templateMinimalist = (curriculo, corPrimaria = '#111827') => {
   <meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; color: #374151; font-size: 9.5pt; background: #fff; line-height: 1.45; }
+    @page { size: A4; margin: 0; }
+    body { font-family: 'Inter', sans-serif; color: #374151; font-size: 9.5pt; background: #fff; line-height: 1.45; margin: 0; }
     a { color: inherit; text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .container { max-width: 210mm; margin: auto; padding: 20mm 18mm; box-sizing: border-box; }
+    .container { width: 210mm; height: 297mm; margin: auto; padding: 20mm 18mm; box-sizing: border-box; }
     h1 { font-size: 24pt; font-weight: 700; text-align: center; margin: 0; padding: 0; color: ${corPrimaria}; }
     .subtitle { font-size: 11pt; font-weight: 600; text-align: center; margin-top: 2px; margin-bottom: 8px; color: #374151; }
     .contato { text-align: center; font-size: 9pt; margin-bottom: 20px; color: #4b5563; }
@@ -652,7 +650,7 @@ export const templateMinimalist = (curriculo, corPrimaria = '#111827') => {
     ` : '')}
 
     ${renderSection('Idiomas', (curriculo.idiomas || []).map(i => `
-      <p><b>${i.idioma}:</b> ${i.nivel}</p>
+      <p><b>${i.idioma}:</b> ${t(`languageLevels.${i.nivel}`)}</p>
     `).join(""))}
 
   </div>
@@ -663,20 +661,21 @@ export const templateMinimalist = (curriculo, corPrimaria = '#111827') => {
 // ==================================================
 // 6. TEMPLATE COLUNA INVERTIDA (ID: 'inverted')
 // ==================================================
-export const templateInverted = (curriculo, corPrimaria = '#064e3b') => `
+export const templateInverted = (curriculo, corPrimaria = '#064e3b', t) => `
 <html>
 <head>
   <meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Open Sans', sans-serif; display: flex; flex-direction: row-reverse; font-size: 10pt; }
-    .sidebar { width: 35%; background: #f0fdf4; padding: 25px; color: #065f46; text-align: right; }
-    .sidebar h2 { font-family: 'Merriweather', serif; font-size: 14pt; color: ${corPrimaria}; border-bottom: 2px solid ${corPrimaria}; padding-bottom: 5px; }
-    .sidebar p { font-size: 9pt; }
-    .main { flex: 1; padding: 25px; }
+    @page { size: A4; margin: 0; }
+    body { font-family: 'Open Sans', sans-serif; display: flex; flex-direction: row-reverse; font-size: 10pt; width: 210mm; height: 297mm; margin: 0; }
+    .sidebar { width: 35%; background: #f0fdf4; padding: 25px; color: #065f46; text-align: right; box-sizing: border-box; }
+    .sidebar h2 { font-family: 'Merriweather', serif; font-size: 14pt; color: ${corPrimaria}; border-bottom: 2px solid ${corPrimaria}; padding-bottom: 5px; margin-top: 25px; }
+    .sidebar p { font-size: 9pt; line-height: 1.6; }
+    .main { flex: 1; padding: 25px; box-sizing: border-box; }
     .header { text-align: left; margin-bottom: 20px; }
     h1 { font-family: 'Merriweather', serif; font-size: 28pt; color: ${corPrimaria}; margin: 0; }
-    .main-title { font-family: 'Merriweather', serif; font-size: 16pt; color: ${corPrimaria}; border-bottom: 2px solid ${corPrimaria}; padding-bottom: 5px; margin-bottom: 10px; }
+    .main-title { font-family: 'Merriweather', serif; font-size: 16pt; color: ${corPrimaria}; border-bottom: 2px solid ${corPrimaria}; padding-bottom: 5px; margin-bottom: 10px; margin-top: 25px; }
     .job { margin-bottom: 15px; }
     .job b { font-weight: 600; }
   </style>
@@ -690,6 +689,8 @@ export const templateInverted = (curriculo, corPrimaria = '#064e3b') => `
     <p>${curriculo.dadosPessoais?.linkedin || ""}</p>
     <h2>Habilidades</h2>
     ${(curriculo.habilidades || []).map(h => `<p>${h.habilidade}</p>`).join("")}
+    <h2>Idiomas</h2>
+    ${(curriculo.idiomas || []).map(i => `<p>${i.idioma} – ${t(`languageLevels.${i.nivel}`)}</p>`).join("")}
   </aside>
   <main class="main">
     <div class="header">
@@ -697,7 +698,7 @@ export const templateInverted = (curriculo, corPrimaria = '#064e3b') => `
     </div>
     <div class="main-title">Resumo</div>
     <p>${curriculo.resumoProfissional || "-"}</p>
-    <div class="main-title" style="margin-top:20px">Experiência</div>
+    <div class="main-title">Experiência</div>
     ${(curriculo.experiencias || []).map(exp => `
       <div class="job">
         <p><b>${exp.cargo}</b>, ${exp.empresa}</p>
@@ -705,7 +706,7 @@ export const templateInverted = (curriculo, corPrimaria = '#064e3b') => `
         <p>${exp.atividades}</p>
       </div>
     `).join("")}
-     <div class="main-title" style="margin-top:20px">Formação</div>
+     <div class="main-title">Formação</div>
      ${(curriculo.formacao || []).map(f => `<p><b>${f.curso}</b> - ${f.instituicao}, ${formatDate(f.anoConclusao)}</p>`).join("")}
   </main>
 </body>
@@ -714,13 +715,14 @@ export const templateInverted = (curriculo, corPrimaria = '#064e3b') => `
 // ==================================================
 // 7. TEMPLATE TOPO DIVIDIDO (ID: 'split')
 // ==================================================
-export const templateSplit = (curriculo, corPrimaria = '#4f46e5') => `
+export const templateSplit = (curriculo, corPrimaria = '#4f46e5', t) => `
 <html>
 <head>
   <meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Montserrat', sans-serif; font-size: 10pt; }
+    @page { size: A4; margin: 0; }
+    body { font-family: 'Montserrat', sans-serif; font-size: 10pt; width: 210mm; height: 297mm; margin: 0; }
     .header-container { position: relative; height: 160px; margin-bottom: 60px; }
     .bg-left { position: absolute; left: 0; top: 0; width: 60%; height: 100%; background: ${corPrimaria}; }
     .bg-right { position: absolute; right: 0; top: 0; width: 40%; height: 100%; background: #e0e7ff; }
@@ -730,8 +732,9 @@ export const templateSplit = (curriculo, corPrimaria = '#4f46e5') => `
     h1 { color: white; font-size: 26pt; margin: 0; }
     .header-text p { color: #ddd; margin: 5px 0; font-size: 9pt; }
     .content { padding: 0 30px; }
-    .section-title { font-size: 14pt; font-weight: 700; color: ${corPrimaria}; margin-top: 20px; margin-bottom: 10px; }
+    .section-title { font-size: 14pt; font-weight: 700; color: ${corPrimaria}; margin-top: 30px; margin-bottom: 10px; }
     .job { margin-bottom: 15px; }
+    p { line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -757,6 +760,8 @@ export const templateSplit = (curriculo, corPrimaria = '#4f46e5') => `
         <p>${exp.atividades}</p>
       </div>
     `).join("")}
+    <div class="section-title">Idiomas</div>
+    ${(curriculo.idiomas || []).map(i => `<p>${i.idioma} – ${t(`languageLevels.${i.nivel}`)}</p>`).join("")}
   </div>
 </body>
 </html>`;
@@ -764,20 +769,21 @@ export const templateSplit = (curriculo, corPrimaria = '#4f46e5') => `
 // ==================================================
 // 8. TEMPLATE MODERNO ESCURO (ID: 'dark')
 // ==================================================
-export const templateDark = (curriculo, corPrimaria = '#34d399') => `
+export const templateDark = (curriculo, corPrimaria = '#34d399', t) => `
 <html>
 <head>
   <meta charset="UTF-8">
   <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <style>
-    body { background: #1f2937; color: #d1d5db; font-family: 'Source Code Pro', monospace; font-size: 10pt; }
+    @page { size: A4; margin: 0; }
+    body { background: #1f2937; color: #d1d5db; font-family: 'Source Code Pro', monospace; font-size: 10pt; width: 210mm; height: 297mm; margin: 0; padding: 20mm; box-sizing: border-box; }
     h1 { font-family: 'Space Grotesk', sans-serif; font-size: 28pt; color: ${corPrimaria}; text-align: center; margin-bottom: 5px; }
     .contato { text-align: center; font-size: 9pt; color: #9ca3af; margin-bottom: 30px; }
-    .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 15pt; font-weight: 700; color: ${corPrimaria}; margin-top: 20px; margin-bottom: 10px; }
+    .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 15pt; font-weight: 700; color: ${corPrimaria}; margin-top: 30px; margin-bottom: 10px; }
     .job { margin-bottom: 15px; border-left: 2px solid ${corPrimaria}; padding-left: 15px; }
     .job-title { font-weight: 600; color: #f9fafb; }
     .job-period { color: #9ca3af; font-size: 9pt; }
-    p { line-height: 1.6; }
+    p { line-height: 1.7; }
     ul { list-style: '>> '; padding-left: 20px; }
   </style>
 </head>
@@ -789,7 +795,7 @@ export const templateDark = (curriculo, corPrimaria = '#34d399') => `
   <div class="section-title">// RESUMO</div>
   <p>${curriculo.resumoProfissional || "-"}</p>
   
-  <div class="section-title" style="margin-top:25px;">// EXPERIÊNCIA</div>
+  <div class="section-title">// EXPERIÊNCIA</div>
   ${(curriculo.experiencias || []).map(exp => `
     <div class="job">
       <p class="job-title">${exp.cargo} @ ${exp.empresa}</p>
@@ -798,10 +804,13 @@ export const templateDark = (curriculo, corPrimaria = '#34d399') => `
     </div>
   `).join("")}
   
-  <div class="section-title" style="margin-top:25px;">// FORMAÇÃO</div>
+  <div class="section-title">// FORMAÇÃO</div>
   ${(curriculo.formacao || []).map(f => `<p><b>${f.curso}</b> - ${f.instituicao}</p>`).join("")}
 
-  <div class="section-title" style="margin-top:25px;">// HABILIDADES</div>
+  <div class="section-title">// HABILIDADES</div>
   ${gerarListaHTML(curriculo.habilidades, h => `<li>${h.habilidade}</li>`)}
+
+  <div class="section-title">// IDIOMAS</div>
+  ${(curriculo.idiomas || []).map(i => `<p>${i.idioma} – ${t(`languageLevels.${i.nivel}`)}</p>`).join("")}
 </body>
 </html>`;

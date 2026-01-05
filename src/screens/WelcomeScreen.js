@@ -7,10 +7,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "react-native-paper";
 import { UserPreferencesContext } from "../context/UserPreferencesContext";
+import * as Animatable from 'react-native-animatable';
 
 const { width, height } = Dimensions.get("window");
 
 const slides = [
+  { key: "0", icon: "translate", image: null }, // Slide de seleção de idioma
   { key: "1", icon: "file-plus", image: require("../../assets/images/welcome_create-removebg-preview.png") },
   { key: "2", icon: "brush", image: require("../../assets/images/welcome_customize-removebg-preview.png") },
   { key: "3", icon: "file-pdf-box", image: require("../../assets/images/welcome_export-removebg-preview.png") },
@@ -18,7 +20,7 @@ const slides = [
 ];
 
 const Backdrop = ({ scrollX, theme }) => {
-  const colors = [theme.colors.primary, theme.colors.secondary, theme.colors.primary, theme.colors.secondary];
+  const colors = [theme.colors.primary, theme.colors.secondary, theme.colors.primary, theme.colors.secondary, theme.colors.primary];
   const backgroundColor = scrollX.interpolate({
     inputRange: colors.map((_, i) => i * width),
     outputRange: colors,
@@ -45,12 +47,17 @@ export default function WelcomeScreen({ onFinish }) {
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef(null);
   const theme = useTheme();
-  const { t } = useContext(UserPreferencesContext);
+  const { t, updatePreferences } = useContext(UserPreferencesContext);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleFinish = async () => {
     await AsyncStorage.setItem("hasSeenWelcome", "true");
     if (onFinish) onFinish();
+  };
+
+  const handleLanguageSelect = (lang) => {
+    updatePreferences({ language: lang });
+    flatListRef.current?.scrollToIndex({ index: 1 });
   };
 
   const onViewableItemsChanged = useRef(({ viewableItems }) => {
@@ -80,9 +87,36 @@ export default function WelcomeScreen({ onFinish }) {
           const opacity = scrollX.interpolate({ inputRange, outputRange: [0, 1, 0], extrapolate: "clamp" });
           const isLastSlide = index === slides.length - 1;
 
+          if (item.key === "0") {
+            return (
+              <View style={styles.slide}>
+                <Animatable.View animation="fadeInDown" duration={1000}>
+                  <MaterialCommunityIcons name={item.icon} size={60} color="#fff" style={{ marginBottom: 20 }} />
+                </Animatable.View>
+                <Animatable.Text animation="fadeInDown" duration={1000} delay={200} style={styles.title}>Selecione seu Idioma</Animatable.Text>
+                <Animatable.Text animation="fadeInDown" duration={1000} delay={400} style={styles.text}>Choose Your Language</Animatable.Text>
+                <Animatable.Text animation="fadeInDown" duration={1000} delay={600} style={styles.text}>Selecciona tu Idioma</Animatable.Text>
+
+                <Animatable.View animation="fadeInUp" duration={1000} delay={800} style={styles.languageButtonContainer}>
+                  <TouchableOpacity style={styles.languageButton} onPress={() => handleLanguageSelect("pt-BR")}>
+                    <Text style={styles.languageButtonText}>Português</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.languageButton} onPress={() => handleLanguageSelect("en")}>
+                    <Text style={styles.languageButtonText}>English</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.languageButton} onPress={() => handleLanguageSelect("es")}>
+                    <Text style={styles.languageButtonText}>Español</Text>
+                  </TouchableOpacity>
+                </Animatable.View>
+              </View>
+            );
+          }
+
           return (
             <View style={styles.slide}>
-              <MaterialCommunityIcons name={item.icon} size={60} color="#fff" style={{ marginBottom: 20 }} />
+              <Animatable.View animation="bounceIn" duration={1200} delay={200}>
+                <MaterialCommunityIcons name={item.icon} size={60} color="#fff" style={{ marginBottom: 20 }} />
+              </Animatable.View>
               <Animated.Image
                 source={item.image}
                 style={[styles.image, { transform: [{ scale: imageScale }], opacity }]}
@@ -92,11 +126,13 @@ export default function WelcomeScreen({ onFinish }) {
               <Animated.Text style={[styles.text, { opacity }]}>{t(`welcome_text_${item.key}`)}</Animated.Text>
 
               {isLastSlide && (
-                <TouchableOpacity style={styles.startButton} onPress={handleFinish}>
-                  <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.startButtonBg}>
-                    <Text style={styles.startButtonText}>{t("startNow")}</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
+                <Animatable.View animation="fadeInUp" duration={1000} delay={500}>
+                  <TouchableOpacity style={styles.startButton} onPress={handleFinish}>
+                    <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.startButtonBg}>
+                      <Text style={styles.startButtonText}>{t("startNow")}</Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </Animatable.View>
               )}
             </View>
           );
@@ -106,17 +142,21 @@ export default function WelcomeScreen({ onFinish }) {
       <Pagination scrollX={scrollX} />
 
       {currentIndex < slides.length - 1 && (
-        <TouchableOpacity
-          style={styles.nextButton}
-          onPress={() => flatListRef.current?.scrollToIndex({ index: currentIndex + 1 })}
-        >
-          <MaterialCommunityIcons name="arrow-right-circle" size={60} color="#fff" />
-        </TouchableOpacity>
+        <Animatable.View animation="fadeInRight" duration={1000} delay={500}>
+          <TouchableOpacity
+            style={styles.nextButton}
+            onPress={() => flatListRef.current?.scrollToIndex({ index: currentIndex + 1 })}
+          >
+            <MaterialCommunityIcons name="arrow-right-circle" size={60} color="#fff" />
+          </TouchableOpacity>
+        </Animatable.View>
       )}
 
-      <TouchableOpacity style={styles.skipButton} onPress={handleFinish}>
-        <Text style={styles.skipText}>{t("skip")}</Text>
-      </TouchableOpacity>
+      <Animatable.View animation="fadeInLeft" duration={1000} delay={500}>
+        <TouchableOpacity style={styles.skipButton} onPress={handleFinish}>
+          <Text style={styles.skipText}>{t("skip")}</Text>
+        </TouchableOpacity>
+      </Animatable.View>
     </View>
   );
 }
@@ -186,6 +226,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
     borderRadius: 30,
     overflow: "hidden",
+    elevation: 2,
   },
   startButtonBg: {
     paddingVertical: 14,
@@ -196,6 +237,23 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 18,
+    textAlign: "center",
+  },
+  languageButtonContainer: {
+    marginTop: 30,
+  },
+  languageButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginVertical: 10,
+    elevation: 2,
+  },
+  languageButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
     textAlign: "center",
   },
 });

@@ -28,7 +28,7 @@ export default function RootNavigator() {
         {/* Ecrãs que abrem por cima, com o seu próprio cabeçalho */}
         <Stack.Screen name="SitesRecomendados" component={SitesRecomendados} options={{ headerShown: false }} />
         <Stack.Screen name="SelecionarTemplate" component={SelecionarTemplate} />
-        <Stack.Screen name="PreviewCurriculo" component={PreviewCurriculo} />
+        <Stack.Screen name="PreviewCurriculo" component={PreviewCurriculo} options={{ title: 'Pré-visualizar' }} />
         <Stack.Screen name="BlogScreen" component={BlogScreen} options={{ headerShown: false }}/>
          <Stack.Screen name="ArtigoScreen" component={ArtigoScreen} options={{ headerShown: false }} />
         <Stack.Screen name="CriarCurrículo" component={TelaFormulario} />

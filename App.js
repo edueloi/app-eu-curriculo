@@ -1,41 +1,24 @@
-import React, { useEffect, useState, useContext } from "react";
+// App.js
+
+import React, { useContext } from "react"; // Removido useState e useEffect
 import { ActivityIndicator, View, StyleSheet } from "react-native";
 import { Provider as PaperProvider } from "react-native-paper";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+// Removido AsyncStorage daqui
 
 import { ThemeProvider, ThemeContext } from "./src/context/ThemeContext";
-import { UserPreferencesProvider } from "./src/context/UserPreferencesContext";
-import RootNavigator from "./src/navigation/RootNavigator"; // ✅ Usa RootNavigator
+import { UserPreferencesProvider, UserPreferencesContext } from "./src/context/UserPreferencesContext"; // Importa o contexto
+import RootNavigator from "./src/navigation/RootNavigator";
 import WelcomeScreen from "./src/screens/WelcomeScreen";
 
 const AppContent = () => {
   const { theme } = useContext(ThemeContext);
-  const [loading, setLoading] = useState(true);
-  const [isFirstLaunch, setIsFirstLaunch] = useState(null); 
-
-  useEffect(() => {
-    const checkWelcome = async () => {
-      try {
-        const value = await AsyncStorage.getItem("hasSeenWelcome");
-        setIsFirstLaunch(value === null);
-      } catch (e) {
-        console.log("Erro ao verificar tela de boas-vindas:", e);
-        setIsFirstLaunch(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkWelcome();
-  }, []);
-
-  const finishWelcome = async () => {
-    await AsyncStorage.setItem("hasSeenWelcome", "true");
-    setIsFirstLaunch(false);
-  };
+  // --- CONSUMINDO O CONTEXTO ATUALIZADO ---
+  const { isLoading, isFirstLaunch, finishWelcome } = useContext(UserPreferencesContext);
   
   const styles = createStyles(theme);
 
-  if (loading) {
+  // A lógica de loading agora vem do contexto
+  if (isLoading) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color={theme?.colors?.primary || '#6200ee'} />
@@ -43,13 +26,13 @@ const AppContent = () => {
     );
   }
 
-  // O PaperProvider agora envolve a navegação
   return (
     <PaperProvider theme={theme}>
       {isFirstLaunch ? (
+        // Passa a função 'finishWelcome' do contexto
         <WelcomeScreen onFinish={finishWelcome} />
       ) : (
-        <RootNavigator /> // A nossa navegação completa
+        <RootNavigator />
       )}
     </PaperProvider>
   );
