@@ -1,289 +1,524 @@
-import React, { useState, useContext, useMemo } from 'react';
-import { StyleSheet, ScrollView, View, Linking } from 'react-native';
-import { Button, Title, Paragraph, Card, Avatar, useTheme, Text, Divider, List } from 'react-native-paper';
+import React, { useState, useContext, useMemo, useRef } from 'react';
+import {
+  StyleSheet, ScrollView, View, TouchableOpacity,
+  Dimensions, Animated,
+} from 'react-native';
+import { Text, useTheme, Divider } from 'react-native-paper';
 import { UserPreferencesContext } from '../context/UserPreferencesContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width } = Dimensions.get('window');
+
+/* ─── paleta de ações rápidas ─── */
+const ACTION_CARDS = [
+  { icon: 'file-document-multiple', label_key: 'myResumes',    route: 'MeusCurriculos', colors: ['#4F46E5','#818CF8'], shape: 'circle' },
+  { icon: 'plus-circle',            label_key: 'createResume', route: 'CriarCurrículo', colors: ['#059669','#34D399'], shape: 'square' },
+  { icon: 'school',                 label_key: 'tutorials',    route: 'Tutoriais',      colors: ['#DC2626','#FB7185'], shape: 'triangle' },
+  { icon: 'cog',                    label_key: 'settings',     route: 'Configurações',  colors: ['#D97706','#FCD34D'], shape: 'diamond' },
+];
+
+/* ─── dicas (scroll horizontal) ─── */
+const TIP_ICONS = ['lightbulb-on','star-four-points','rocket-launch','trophy','fire','check-all'];
 
 export default function TelaInicial({ navigation }) {
-  const theme = useTheme();
-  const styles = createStyles(theme);
+  const theme   = useTheme();
   const { t, profile } = useContext(UserPreferencesContext);
 
-  const [totalCurriculos, setTotalCurriculos] = useState(0);
-  const [ultimoCurriculo, setUltimoCurriculo] = useState(null);
+  const [totalCurriculos, setTotalCurriculos]   = useState(0);
+  const [ultimoCurriculo, setUltimoCurriculo]   = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
-      const carregarDados = async () => {
-        const data = await AsyncStorage.getItem("curriculos");
+      (async () => {
+        const data = await AsyncStorage.getItem('curriculos');
         if (data) {
           const lista = JSON.parse(data);
           setTotalCurriculos(lista.length);
-          const ultimo = lista.length > 0 ? { curriculo: lista[lista.length - 1], index: lista.length - 1 } : null;
-          setUltimoCurriculo(ultimo);
+          setUltimoCurriculo(lista.length > 0
+            ? { curriculo: lista[lista.length - 1], index: lista.length - 1 }
+            : null);
         } else {
           setTotalCurriculos(0);
           setUltimoCurriculo(null);
         }
-      };
-      carregarDados();
+      })();
     }, [])
   );
 
-  const nomeUsuario = profile?.nome?.split(' ')[0] || t("user");
-  
-  const dicas = [t("tip1"), t("tip2"), t("tip3"), t("tip4"), t("tip5"), t("tip6"), t("tip7"), t("tip8")];
+  const nomeUsuario = profile?.nome?.split(' ')[0] || t('user');
+  const hora        = new Date().getHours();
+  const saudacao    = hora < 12
+    ? (t('goodMorning')   || 'Bom dia')
+    : hora < 18
+      ? (t('goodAfternoon') || 'Boa tarde')
+      : (t('goodEvening')   || 'Boa noite');
+
+  const allDicas = [t('tip1'),t('tip2'),t('tip3'),t('tip4'),t('tip5'),t('tip6'),t('tip7'),t('tip8')];
   const dicaDoDia = useMemo(() => {
-    const diaDoAno = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-    return dicas[diaDoAno % dicas.length];
+    const diaDoAno = Math.floor(
+      (new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000
+    );
+    return allDicas[diaDoAno % allDicas.length];
   }, [t]);
 
+  /* progresso do perfil */
+  const profileProgress = useMemo(() => {
+    const fields = [profile?.nome, profile?.profissao, profile?.email, profile?.foto];
+    const filled  = fields.filter(Boolean).length;
+    return Math.round((filled / fields.length) * 100);
+  }, [profile]);
+
+  const s = createStyles(theme);
+
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ScrollView contentContainerStyle={styles.container}>
-        <Animatable.View animation="fadeInDown" duration={800}>
-          <Title style={styles.welcomeTitle}>{`${t("welcome")}, ${nomeUsuario}!`}</Title>
-          <Paragraph style={styles.welcomeSubtitle}>{t("welcomeSubtitle")}</Paragraph>
+    <View style={s.root}>
+      <ScrollView
+        contentContainerStyle={s.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+
+        {/* ══════════ HERO ══════════ */}
+        <Animatable.View animation="fadeInDown" duration={600} easing="ease-out-expo">
+          <LinearGradient
+            colors={[theme.colors.primary, theme.colors.secondary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={s.hero}
+          >
+            {/* bolhas decorativas */}
+            <View style={[s.bubble, s.bubble1]} />
+            <View style={[s.bubble, s.bubble2]} />
+            <View style={[s.bubble, s.bubble3]} />
+
+            <View style={s.heroContent}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.heroGreeting}>{saudacao} 👋</Text>
+                <Text style={s.heroName}>{nomeUsuario}!</Text>
+                <Text style={s.heroSub}>{t('welcomeSubtitle')}</Text>
+              </View>
+
+              {/* bolinha de stat */}
+              <Animatable.View animation="zoomIn" duration={700} delay={300} style={s.statBubble}>
+                <Text style={s.statNum}>{totalCurriculos}</Text>
+                <Text style={s.statLabel}>{t('resumesSaved')}</Text>
+              </Animatable.View>
+            </View>
+
+            {/* botão CTA */}
+            <Animatable.View animation="fadeInUp" duration={600} delay={400}>
+              <TouchableOpacity
+                style={s.heroCta}
+                onPress={() => navigation.navigate('CriarCurrículo')}
+                activeOpacity={0.85}
+              >
+                <MaterialCommunityIcons name="plus-circle" size={18} color={theme.colors.primary} />
+                <Text style={[s.heroCtaText, { color: theme.colors.primary }]}>
+                  {t('createResume')}
+                </Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          </LinearGradient>
         </Animatable.View>
 
-        <Animatable.View animation="fadeInUp" duration={800} delay={200}>
-          <Card style={styles.summaryCard}>
-            <Card.Content style={styles.summaryContent}>
-              <View style={styles.summaryItem}>
-                <Text style={styles.summaryValue}>{totalCurriculos}</Text>
-                <Paragraph style={styles.summaryLabel}>{t("resumesSaved")}</Paragraph>
+        {/* ══════════ PROGRESSO DO PERFIL ══════════ */}
+        <Animatable.View animation="fadeInUp" duration={500} delay={150} style={[s.profileCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.cardBorder }]}>
+          <View style={s.profileCardLeft}>
+            <View style={[s.profileIconBox, { backgroundColor: theme.colors.primaryContainer }]}>
+              <MaterialCommunityIcons name="account-check-outline" size={22} color={theme.colors.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.profileCardTitle, { color: theme.colors.onSurface }]}>
+                Perfil {profileProgress === 100 ? '✅' : `${profileProgress}% completo`}
+              </Text>
+              <View style={[s.progressTrack, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Animatable.View
+                  animation="slideInLeft"
+                  duration={800}
+                  delay={400}
+                  style={[s.progressBar, { width: `${profileProgress}%`, backgroundColor: profileProgress === 100 ? '#059669' : theme.colors.primary }]}
+                />
               </View>
-              <View style={styles.summarySeparator} />
-              <View style={styles.summaryItem}>
-                <Avatar.Icon size={32} icon="account-tie" style={{ backgroundColor: 'transparent' }} color={theme.colors.secondary} />
-                <Paragraph style={styles.summaryLabel} numberOfLines={2}>{profile?.profissao || t("yourProfession")}</Paragraph>
-              </View>
-            </Card.Content>
-          </Card>
+            </View>
+          </View>
+          {profileProgress < 100 && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Configurações')}
+              style={[s.profileCta, { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }]}
+            >
+              <Text style={[s.profileCtaText, { color: theme.colors.primary }]}>Completar</Text>
+            </TouchableOpacity>
+          )}
         </Animatable.View>
 
+        {/* ══════════ CONTINUAR ONDE PAROU ══════════ */}
         {ultimoCurriculo && (
-          <Animatable.View animation="fadeInUp" duration={800} delay={300}>
-             <Title style={styles.sectionTitle}>{t("continueWhereYouLeftOff")}</Title>
-            <Card style={styles.card}>
-              <Card.Title 
-                title={ultimoCurriculo.curriculo.nomeInterno || t('lastEdited')}
-                titleStyle={{fontWeight: 'bold'}}
-                left={(props) => <Avatar.Icon {...props} icon="file-clock-outline" />}
+          <Animatable.View animation="fadeInUp" duration={500} delay={200}>
+            <SectionLabel label={t('continueWhereYouLeftOff')} theme={theme} />
+            <TouchableOpacity
+              style={[s.continueCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.cardBorder }]}
+              onPress={() => navigation.navigate('CriarCurrículo', ultimoCurriculo)}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={[theme.colors.primary + '22', theme.colors.secondary + '11']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={s.continueBg}
               />
-              <Card.Actions style={styles.actions}>
-                <Button icon="pencil-outline" onPress={() => navigation.navigate('CriarCurrículo', ultimoCurriculo)}>{t("edit")}</Button>
-                <Button icon="file-eye-outline" mode="contained" onPress={() => navigation.navigate('MeusCurriculos', { 
-                    screen: 'SelecionarTemplate', 
-                    params: { curriculo: ultimoCurriculo.curriculo } 
-                  })}>{t("view")}</Button>
-              </Card.Actions>
-            </Card>
+              <View style={[s.continueIconBox, { backgroundColor: theme.colors.primary }]}>
+                <MaterialCommunityIcons name="file-clock" size={24} color="#fff" />
+              </View>
+              <View style={s.continueInfo}>
+                <Text style={[s.continueName, { color: theme.colors.onSurface }]} numberOfLines={1}>
+                  {ultimoCurriculo.curriculo.nomeInterno || t('lastEdited')}
+                </Text>
+                <Text style={[s.continueDate, { color: theme.colors.onSurfaceVariant }]}>
+                  {formatDate(ultimoCurriculo.curriculo.lastUpdated)}
+                </Text>
+              </View>
+              <View style={[s.continueArrow, { backgroundColor: theme.colors.primary }]}>
+                <MaterialCommunityIcons name="arrow-right" size={16} color="#fff" />
+              </View>
+            </TouchableOpacity>
           </Animatable.View>
         )}
 
-        <Title style={styles.sectionTitle}>{t("quickActions")}</Title>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
-             <CardAcao icon="folder-multiple-outline" label={t("myResumes")} onPress={() => navigation.navigate('MeusCurriculos')} styles={styles} theme={theme} />
-             <CardAcao icon="plus-circle-outline" label={t("createResume")} onPress={() => navigation.navigate('CriarCurrículo')} styles={styles} theme={theme} />
-             <CardAcao icon="school-outline" label={t("tutorials")} onPress={() => navigation.navigate('Tutoriais')} styles={styles} theme={theme} />
-             <CardAcao icon="cog-outline" label={t("settings")} onPress={() => navigation.navigate('Configurações')} styles={styles} theme={theme} />
+        {/* ══════════ AÇÕES RÁPIDAS (grid 2×2 com gradientes) ══════════ */}
+        <SectionLabel label={t('quickActions')} theme={theme} />
+        <View style={s.actionsGrid}>
+          {ACTION_CARDS.map((card, i) => (
+            <Animatable.View
+              key={card.route}
+              animation="zoomIn"
+              duration={400}
+              delay={250 + i * 70}
+            >
+              <TouchableOpacity
+                onPress={() => navigation.navigate(card.route)}
+                activeOpacity={0.82}
+                style={s.actionCard}
+              >
+                <LinearGradient
+                  colors={card.colors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.actionGradient}
+                >
+                  {/* formas decorativas */}
+                  <View style={[s.actionDeco, s.actionDeco1, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+                  <View style={[s.actionDeco, s.actionDeco2, { backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+
+                  <View style={s.actionIconWrap}>
+                    <MaterialCommunityIcons name={card.icon} size={28} color="#fff" />
+                  </View>
+                  <Text style={s.actionLabel}>{t(card.label_key)}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animatable.View>
+          ))}
+        </View>
+
+        {/* ══════════ DICAS (scroll horizontal) ══════════ */}
+        <Animatable.View animation="fadeInUp" duration={500} delay={500}>
+          <SectionLabel label="Dicas de Carreira" theme={theme} />
+        </Animatable.View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.tipsScroll}
+          snapToInterval={272} // width (260) + gap (12)
+          decelerationRate="fast"
+        >
+          {allDicas.map((dica, i) => (
+            <Animatable.View
+              key={i}
+              animation="fadeInRight"
+              duration={400}
+              delay={500 + i * 60}
+            >
+              <TouchableOpacity activeOpacity={0.85} style={[s.tipChip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+                <LinearGradient
+                  colors={[theme.colors.primary, theme.colors.secondary || theme.colors.primary]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={s.tipChipGrad}
+                >
+                  <MaterialCommunityIcons
+                    name={TIP_ICONS[i % TIP_ICONS.length]}
+                    size={22}
+                    color="#fff"
+                  />
+                </LinearGradient>
+                <Text style={[s.tipText, { color: theme.colors.onSurface }]} numberOfLines={4}>{dica}</Text>
+              </TouchableOpacity>
+            </Animatable.View>
+          ))}
         </ScrollView>
 
-        <Animatable.View animation="fadeInUp" duration={800} delay={500}>
-            <Title style={styles.sectionTitle}>{t("usefulResources")}</Title>
-            <Card style={styles.card}>
-                <List.Item
-                    title={t("findJobs")}
-                    description={t("findJobsDesc")}
-                    left={props => <List.Icon {...props} icon="briefcase-search-outline" />}
-                    right={props => <List.Icon {...props} icon="open-in-new" />}
-                    onPress={() => navigation.navigate('SitesRecomendados')}
-                />
-                <Divider/>
-                 <List.Item
-                    title={t("blogTips")}
-                    description={t("blogTipsDesc")}
-                    left={props => <List.Icon {...props} icon="post-outline" />}
-                    right={props => <List.Icon {...props} icon="open-in-new" />}
-                    onPress={() => navigation.navigate('BlogScreen')}
-                />
-            </Card>
+        {/* ══════════ RECURSOS ÚTEIS ══════════ */}
+        <Animatable.View animation="fadeInUp" duration={500} delay={550}>
+          <SectionLabel label={t('usefulResources')} theme={theme} />
+          <View style={[s.resourcesCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.cardBorder }]}>
+            <ResourceRow
+              icon="briefcase-search"
+              colors={['#4F46E5','#818CF8']}
+              title={t('findJobs')}
+              desc={t('findJobsDesc')}
+              onPress={() => navigation.navigate('SitesRecomendados')}
+              theme={theme}
+            />
+            <Divider style={{ marginHorizontal: 16, opacity: 0.4 }} />
+            <ResourceRow
+              icon="newspaper-variant"
+              colors={['#059669','#34D399']}
+              title={t('blogTips')}
+              desc={t('blogTipsDesc')}
+              onPress={() => navigation.navigate('BlogScreen')}
+              theme={theme}
+            />
+          </View>
         </Animatable.View>
-        
-        <Title style={styles.sectionTitle}>{t("cardOfTheDay")}</Title>
-        <Animatable.View animation="fadeInUp" duration={800} delay={600}>
-          <Card style={styles.card}>
-             <Card.Title 
-               title={t("didYouKnow")}
-               left={(props) => <Avatar.Icon {...props} icon="lightbulb-on-outline" style={{backgroundColor: 'transparent'}} color={theme.colors.primary}/>}
-             />
-             <Divider/>
-            <Card.Content style={{paddingTop: 16}}>
-              <Dica icon="check-circle" text={dicaDoDia} styles={styles} />
-            </Card.Content>
-          </Card>
-        </Animatable.View>
-      </ScrollView>
 
-      <Animatable.View animation="zoomIn" duration={500} delay={1000}>
-        <Button 
-          icon="plus" 
-          mode="contained" 
-          style={styles.fab}
-          onPress={() => navigation.navigate('CriarCurrículo')}
-          contentStyle={styles.fabContent}
-        >
-          {t("create")}
-        </Button>
-      </Animatable.View>
+        {/* ══════════ DICA DO DIA ══════════ */}
+        <Animatable.View animation="fadeInUp" duration={500} delay={600}>
+          <SectionLabel label={t('cardOfTheDay')} theme={theme} />
+          <LinearGradient
+            colors={[theme.colors.primary, theme.colors.secondary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={s.tipOfDay}
+          >
+            <View style={s.tipOfDayBubble} />
+            <MaterialCommunityIcons name="lightbulb-on" size={32} color="rgba(255,255,255,0.9)" style={{ marginBottom: 12 }} />
+            <Text style={s.tipOfDayText}>{dicaDoDia}</Text>
+          </LinearGradient>
+        </Animatable.View>
+
+      </ScrollView>
     </View>
   );
 }
 
-const CardAcao = ({ icon, label, onPress, styles, theme }) => (
-  <Card style={styles.actionCard} onPress={onPress}>
-    <Card.Content style={styles.actionContent}>
-      <Avatar.Icon size={40} icon={icon} style={{ backgroundColor: theme.colors.surfaceVariant }} />
-      <Text style={styles.actionLabel} numberOfLines={2}>{label}</Text>
-    </Card.Content>
-  </Card>
-);
-
-const Dica = ({ icon, text, styles }) => (
-  <View style={styles.tipContainer}>
-    <MaterialCommunityIcons name={icon} size={20} style={styles.tipIcon} />
-    <Paragraph style={styles.tipText}>{text}</Paragraph>
+/* ─── sub-componentes ─── */
+const SectionLabel = ({ label, theme }) => (
+  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 28, marginBottom: 14, paddingHorizontal: 2 }}>
+    <View style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: theme.colors.primary }} />
+    <Text style={{ fontSize: 13, fontWeight: '800', color: theme.colors.onSurface, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+      {label}
+    </Text>
   </View>
 );
 
+const ResourceRow = ({ icon, colors, title, desc, onPress, theme }) => (
+  <TouchableOpacity style={rs.row} onPress={onPress} activeOpacity={0.75}>
+    <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={rs.iconBox}>
+      <MaterialCommunityIcons name={icon} size={20} color="#fff" />
+    </LinearGradient>
+    <View style={rs.text}>
+      <Text style={[rs.title, { color: theme.colors.onSurface }]}>{title}</Text>
+      <Text style={[rs.desc,  { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>{desc}</Text>
+    </View>
+    <View style={[rs.arrow, { backgroundColor: theme.colors.surfaceVariant }]}>
+      <MaterialCommunityIcons name="chevron-right" size={18} color={theme.colors.onSurfaceVariant} />
+    </View>
+  </TouchableOpacity>
+);
+
+function formatDate(ds) {
+  if (!ds) return '';
+  return new Date(ds).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/* ─── styles ─── */
+const CARD_W = (width - 32 - 12) / 2;
+
 const createStyles = (theme) => StyleSheet.create({
-  container: { 
-    paddingHorizontal: 16, 
-    paddingVertical: 8,
-    paddingBottom: 100,
-    backgroundColor: theme.colors.background 
+  root:   { flex: 1, backgroundColor: theme.colors.background },
+  scroll: { paddingHorizontal: 16, paddingBottom: 40, paddingTop: 8 },
+
+  /* HERO */
+  hero: {
+    borderRadius: 28,
+    padding: 24,
+    overflow: 'hidden',
+    marginBottom: 4,
+    elevation: 8,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 14,
   },
-  welcomeTitle: {
-    fontSize: 28,
-    fontWeight: '800', // Mais forte
-    color: theme.colors.onBackground,
-  },
-  welcomeSubtitle: {
-    fontSize: 16,
-    color: theme.colors.onSurfaceVariant,
-    marginBottom: 20,
-  },
-  summaryCard: {
-    backgroundColor: theme.colors.primaryContainer,
+  bubble: { position: 'absolute', borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.08)' },
+  bubble1: { width: 160, height: 160, top: -60, right: -40 },
+  bubble2: { width: 90,  height: 90,  bottom: -30, left: -20 },
+  bubble3: { width: 50,  height: 50,  top: 10, right: 80 },
+
+  heroContent:  { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  heroGreeting: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: '500' },
+  heroName:     { color: '#fff', fontSize: 28, fontWeight: '900', letterSpacing: 0.2, marginTop: 2 },
+  heroSub:      { color: 'rgba(255,255,255,0.72)', fontSize: 13, marginTop: 6, lineHeight: 18 },
+
+  statBubble: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 20,
-    elevation: 4,
-    marginBottom: 24,
+    width: 76,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
-  summaryContent: {
+  statNum:   { color: '#fff', fontSize: 30, fontWeight: '900', lineHeight: 34 },
+  statLabel: { color: 'rgba(255,255,255,0.82)', fontSize: 10, fontWeight: '600', textAlign: 'center', marginTop: 2 },
+
+  heroCta: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    padding: 20,
+    gap: 8,
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    paddingVertical: 11,
+    paddingHorizontal: 22,
+    alignSelf: 'flex-start',
+    marginTop: 22,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
-  summaryItem: {
-    alignItems: 'center',
-    gap: 4,
-    flex: 1,
-  },
-  summaryValue: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: theme.colors.onPrimaryContainer,
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: theme.colors.onPrimaryContainer,
-    textAlign: 'center'
-  },
-  summarySeparator: {
-    width: 1,
-    height: '80%',
-    backgroundColor: theme.colors.onPrimaryContainer,
-    opacity: 0.3,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 16,
-    marginTop: 16,
-    color: theme.colors.onBackground,
-  },
-  horizontalScroll: {
-    paddingLeft: 16, // Espaçamento inicial para o scroll horizontal
-    paddingRight: 8,  // Espaçamento final
-    marginHorizontal: -16, // Compensa o padding do container
-  },
-  actionCard: {
-    width: 130,
-    marginRight: 12,
-    borderRadius: 16,
-    backgroundColor: theme.colors.surface,
-    elevation: 2,
-  },
-  actionContent: {
-    alignItems: 'center',
+  heroCtaText: { fontWeight: '800', fontSize: 14 },
+
+  /* PROFILE CARD */
+  profileCard: {
+    borderRadius: 18,
     padding: 16,
-    gap: 12, // Aumenta o espaçamento interno
-    minHeight: 120,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderWidth: 1,
+    marginTop: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
   },
-  actionLabel: {
+  profileCardLeft:  { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  profileIconBox:   { width: 44, height: 44, borderRadius: 13, justifyContent: 'center', alignItems: 'center' },
+  profileCardTitle: { fontSize: 13, fontWeight: '700', marginBottom: 8 },
+  progressTrack:    { height: 6, borderRadius: 3, overflow: 'hidden' },
+  progressBar:      { height: 6, borderRadius: 3 },
+  profileCta: {
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  profileCtaText: { fontSize: 12, fontWeight: '800' },
+
+  /* CONTINUAR */
+  continueCard: {
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+  },
+  continueBg: { ...StyleSheet.absoluteFillObject },
+  continueIconBox: { width: 50, height: 50, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
+  continueInfo:    { flex: 1 },
+  continueName:    { fontSize: 15, fontWeight: '800' },
+  continueDate:    { fontSize: 12, marginTop: 3 },
+  continueArrow:   { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+
+  /* AÇÕES (grid) */
+  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  actionCard:  { width: CARD_W, borderRadius: 22, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 8 },
+  actionGradient: { padding: 20, paddingBottom: 18, minHeight: 120, justifyContent: 'flex-end', position: 'relative', overflow: 'hidden' },
+  actionDeco:  { position: 'absolute', borderRadius: 999 },
+  actionDeco1: { width: 90, height: 90, top: -30, right: -20 },
+  actionDeco2: { width: 50, height: 50, top: 10, right: 60 },
+  actionIconWrap: { marginBottom: 10 },
+  actionLabel: { color: '#fff', fontSize: 14, fontWeight: '800', lineHeight: 18 },
+
+  /* DICAS scroll */
+  tipsScroll: { paddingRight: 16, paddingLeft: 4, gap: 12, paddingBottom: 8 },
+  tipChip: {
+    width: 260,
+    minHeight: 140,
+    borderRadius: 22,
+    overflow: 'hidden',
+    padding: 20,
+    borderWidth: 1,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    justifyContent: 'flex-start'
+  },
+  tipChipGrad: { width: 46, height: 46, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 14 },
+  tipText: { fontSize: 14, lineHeight: 22, fontWeight: '700' },
+
+  /* RECURSOS */
+  resourcesCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+  },
+
+  /* DICA DO DIA */
+  tipOfDay: {
+    borderRadius: 24,
+    padding: 26,
+    alignItems: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+    elevation: 6,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+  },
+  tipOfDayBubble: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    top: -80,
+    right: -60,
+  },
+  tipOfDayText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
     textAlign: 'center',
-    fontWeight: 'bold',
-    color: theme.colors.onSurface
+    lineHeight: 24,
   },
-  card: { 
-    borderRadius: 16, 
-    backgroundColor: theme.colors.surface, 
-    elevation: 2, 
-    marginBottom: 24, 
-  },
-  actions: { 
-    justifyContent: 'flex-end', 
-    paddingHorizontal: 16, 
-    paddingBottom: 16 
-  },
-  tipContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-  },
-  tipIcon: { 
-    marginRight: 16, 
-    color: theme.colors.primary, 
-  },
-  tipText: { 
-    flex: 1, 
-    color: theme.colors.onSurfaceVariant, 
-    lineHeight: 22 
-  },
-  fab: { 
-    position: 'absolute', 
-    right: 16, 
-    bottom: 50, 
-    borderRadius: 30, 
-    elevation: 8, 
-  },
-  fabContent: { 
-    paddingHorizontal: 8, 
-    height: 56, 
-  },
-  inspirationCover: { 
-    borderTopLeftRadius: 16, 
-    borderTopRightRadius: 16, 
-    height: 120 
-  },
-  inspirationContent: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    padding: 16 
-  },
+});
+
+const rs = StyleSheet.create({
+  row:    { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 14 },
+  iconBox:{ width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
+  text:   { flex: 1 },
+  title:  { fontSize: 14, fontWeight: '700' },
+  desc:   { fontSize: 12, marginTop: 3, lineHeight: 16 },
+  arrow:  { width: 32, height: 32, borderRadius: 9, justifyContent: 'center', alignItems: 'center' },
 });

@@ -1,8 +1,9 @@
 // App.js
 
 import React, { useContext } from "react"; // Removido useState e useEffect
-import { ActivityIndicator, View, StyleSheet } from "react-native";
+import { ActivityIndicator, View, StyleSheet, Platform } from "react-native";
 import { Provider as PaperProvider } from "react-native-paper";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 // Removido AsyncStorage daqui
 
 import { ThemeProvider, ThemeContext } from "./src/context/ThemeContext";
@@ -28,12 +29,16 @@ const AppContent = () => {
 
   return (
     <PaperProvider theme={theme}>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       {isFirstLaunch ? (
         // Passa a função 'finishWelcome' do contexto
         <WelcomeScreen onFinish={finishWelcome} />
       ) : (
         <RootNavigator />
       )}
+        </SafeAreaView>
+      </SafeAreaProvider>
     </PaperProvider>
   );
 };
@@ -54,5 +59,10 @@ const createStyles = (theme) => StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: theme?.colors?.background || '#fff',
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: theme?.colors?.background || "#F0F4F8",
+    paddingBottom: Platform.OS === "android" ? 0 : 0,
   },
 });

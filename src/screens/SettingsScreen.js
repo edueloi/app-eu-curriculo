@@ -1,212 +1,426 @@
-// src/screens/SettingsScreen.js
-
-import React, { useContext, useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, ActivityIndicator } from "react-native";
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import {
-  List, Switch, Button, Card, Divider, Paragraph, Avatar, TextInput, Snackbar, useTheme, Dialog, Portal
-} from "react-native-paper";
-import * as ImagePicker from "expo-image-picker";
-import { ThemeContext, CoresPadrao } from "../context/ThemeContext";
-import { UserPreferencesContext } from "../context/UserPreferencesContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+  View, StyleSheet, ScrollView, Alert, TouchableOpacity,
+  Image, Platform, Dimensions, Animated,
+} from 'react-native';
+import { TextInput, Snackbar, useTheme, Portal, Dialog, Button, Switch, Text } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
+import { ThemeContext, CoresPadrao } from '../context/ThemeContext';
+import { UserPreferencesContext } from '../context/UserPreferencesContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Animatable from 'react-native-animatable';
 
+const { width } = Dimensions.get('window');
+
+/* ── nomes dos idiomas ── */
+const LANG_NAMES = { 'pt-BR': 'Português (Brasil)', en: 'English', es: 'Español' };
+const LANG_FLAGS = { 'pt-BR': '🇧🇷', en: '🇺🇸', es: '🇪🇸' };
+
+/* ── tamanhos de fonte ── */
+const FONT_SIZE_ICONS = { small: 'format-font-size-decrease', medium: 'format-size', large: 'format-font-size-increase' };
+
+/* ── paleta de cores ── */
+const COLOR_PALETTE = [
+  { color: CoresPadrao.azulMarinho,    label: 'Azul Marinho' },
+  { color: CoresPadrao.azulAcinzentado,label: 'Índigo' },
+  { color: '#059669',                  label: 'Verde' },
+  { color: '#DC2626',                  label: 'Vermelho' },
+  { color: '#D97706',                  label: 'Âmbar' },
+  { color: '#7C3AED',                  label: 'Roxo' },
+  { color: '#BE185D',                  label: 'Rosa' },
+  { color: '#0891B2',                  label: 'Ciano' },
+];
+
+/* ─────────── sub-componentes ─────────── */
+function SectionCard({ icon, title, subtitle, color, gradient, children, theme, delay = 0 }) {
+  return (
+    <Animatable.View animation="fadeInUp" duration={450} delay={delay} style={[sc.card, { backgroundColor: theme.colors.surface, borderColor: color + '25' }]}>
+      <View style={sc.header}>
+        <LinearGradient colors={gradient} style={sc.iconBox}>
+          <MaterialCommunityIcons name={icon} size={20} color="#fff" />
+        </LinearGradient>
+        <View style={{ flex: 1 }}>
+          <Text style={[sc.title, { color: theme.colors.onSurface }]}>{title}</Text>
+          {subtitle ? <Text style={[sc.sub, { color: theme.colors.onSurfaceVariant }]}>{subtitle}</Text> : null}
+        </View>
+      </View>
+      <View style={sc.body}>{children}</View>
+    </Animatable.View>
+  );
+}
+
+function OptionRow({ icon, label, value, onPress, theme, color, last }) {
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.75} style={[or.row, !last && { borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }]}>
+      {icon && <MaterialCommunityIcons name={icon} size={18} color={color || theme.colors.onSurfaceVariant} style={{ marginRight: 10 }} />}
+      <Text style={[or.label, { color: theme.colors.onSurface }]}>{label}</Text>
+      {value !== undefined && <Text style={[or.val, { color: color || theme.colors.primary }]}>{value}</Text>}
+      <MaterialCommunityIcons name="chevron-right" size={18} color={theme.colors.onSurfaceVariant} />
+    </TouchableOpacity>
+  );
+}
+
+/* ─────────── TELA PRINCIPAL ─────────── */
 export default function SettingsScreen({ navigation }) {
   const theme = useTheme();
   const { toggleTheme, setPrimaryColor, isDarkTheme } = useContext(ThemeContext);
-  // --- PEGANDO A NOVA FUNÇÃO DO CONTEXTO ---
   const { language, fontSize, profile, updatePreferences, t, triggerWelcomeScreen } = useContext(UserPreferencesContext);
 
-  const [localProfile, setLocalProfile] = useState(profile);
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [resetDialogVisible, setResetDialogVisible] = useState(false);
+  const [localProfile, setLocalProfile] = useState(profile || {});
+  const [snackMsg, setSnackMsg]         = useState('');
+  const [snackVisible, setSnackVisible] = useState(false);
+  const [resetDialog, setResetDialog]   = useState(false);
+  const [langSheet, setLangSheet]       = useState(false);
+  const [fontSheet, setFontSheet]       = useState(false);
 
-  useEffect(() => { setLocalProfile(profile); }, [profile]);
+  useEffect(() => { setLocalProfile(profile || {}); }, [profile]);
 
-  const salvarPerfil = () => {
+  const showSnack = (msg) => { setSnackMsg(msg); setSnackVisible(true); };
+
+  const salvar = () => {
     updatePreferences({ profile: localProfile });
-    setSnackbarVisible(true);
-  };
-  
-  // (As funções escolherFoto e tirarFoto continuam iguais...)
-  const escolherFoto = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(t("permissionNeeded"), t("permissionGallery"));
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.8,
-    });
-    if (!result.canceled) {
-      setLocalProfile({ ...localProfile, foto: result.assets[0].uri });
-    }
-  };
-
-  const tirarFoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(t("permissionNeeded"), t("permissionCamera"));
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true, aspect: [1, 1], quality: 0.8,
-    });
-    if (!result.canceled) {
-      setLocalProfile({ ...localProfile, foto: result.assets[0].uri });
-    }
-  };
-
-  const handleResetAccount = () => {
-    setResetDialogVisible(true);
+    showSnack(t('profileSaved') || 'Perfil salvo!');
   };
 
-  const confirmResetAccount = async () => {
-    setResetDialogVisible(false);
-    setLoading(true);
-    try {
-      // Limpa todos os dados
-      await AsyncStorage.multiRemove(['curriculos', 'profile', 'language', 'fontSize', 'hasSeenWelcome']);
-      
-      // --- AQUI ESTÁ A MÁGICA ---
-      // Chama a função do contexto para forçar a tela de boas-vindas
-      triggerWelcomeScreen();
-      // Não precisa mais do navigation.navigate, o contexto vai cuidar da troca de tela
-      
-    } catch (e) {
-      console.error("Erro ao resetar a conta", e);
-    } finally {
-      // O setLoading pode ser removido aqui, pois a tela será desmontada
-      // setLoading(false); 
-    }
+  const pickGallery = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') { Alert.alert(t('permissionNeeded'), t('permissionGallery')); return; }
+    const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1,1], quality: 0.8 });
+    if (!r.canceled) setLocalProfile(p => ({ ...p, foto: r.assets[0].uri }));
   };
 
-  // O resto do seu componente continua igual...
-  
-  // (código JSX do return)
-  const styles = createStyles(theme, fontSize);
+  const pickCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') { Alert.alert(t('permissionNeeded'), t('permissionCamera')); return; }
+    const r = await ImagePicker.launchCameraAsync({ allowsEditing: true, aspect: [1,1], quality: 0.8 });
+    if (!r.canceled) setLocalProfile(p => ({ ...p, foto: r.assets[0].uri }));
+  };
 
-  const cores = [
-    { name: t("navyBlue"), color: CoresPadrao.azulMarinho },
-    { name: t("grayishBlue"), color: CoresPadrao.azulAcinzentado },
-    { name: t("green"), color: "#28a745" },
-    { name: t("orange"), color: "#fd7e14" },
-    { name: t("pink"), color: "#e83e8c" },
-  ];
+  const confirmReset = async () => {
+    setResetDialog(false);
+    await AsyncStorage.multiRemove(['curriculos','profile','language','fontSize','hasSeenWelcome']);
+    triggerWelcomeScreen();
+  };
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+  const FONT_LABELS = {
+    small:  t('small')  || 'Pequeno',
+    medium: t('medium') || 'Médio',
+    large:  t('large')  || 'Grande',
+  };
 
-  return (
-    <>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* --- PERFIL --- */}
-        <Card style={styles.card}>
-          <Card.Title title={t("profile")} subtitle={t("editInfo")} left={(props) => 
-              localProfile?.foto ? 
-                <Avatar.Image {...props} source={{ uri: localProfile.foto }} /> 
-                : <Avatar.Image {...props} source={require('../../assets/avatar-placeholder.png')} />
-            }
-          />
-          <Card.Content style={styles.content}>
-            <TextInput label={t("name")} value={localProfile?.nome} onChangeText={(text) => setLocalProfile({ ...localProfile, nome: text })} style={styles.input}/>
-            <TextInput label={t("profession")} value={localProfile?.profissao} onChangeText={(text) => setLocalProfile({ ...localProfile, profissao: text })} style={styles.input}/>
-            <TextInput label={t("email")} value={localProfile?.email} onChangeText={(text) => setLocalProfile({ ...localProfile, email: text })} style={styles.input}/>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 10, width: '100%' }}>
-              <Button mode="outlined" icon="image" onPress={escolherFoto} style={{ marginTop: 6, flex: 1 }}>{t("gallery")}</Button>
-              <Button mode="outlined" icon="camera" onPress={tirarFoto} style={{ marginTop: 6, flex: 1 }}>{t("camera")}</Button>
-            </View>
-            <Button mode="contained" style={{ marginTop: 10, width: '100%' }} onPress={salvarPerfil}>{t("saveProfile")}</Button>
-          </Card.Content>
-        </Card>
+  return (
+    <>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
+        contentContainerStyle={{ paddingBottom: 48 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ══ HERO ══ */}
+        <Animatable.View animation="fadeInDown" duration={500}>
+          <LinearGradient
+            colors={[theme.colors.primary, theme.colors.secondary]}
+            start={{ x:0,y:0 }} end={{ x:1,y:1 }}
+            style={s.hero}
+          >
+            <View style={s.hb1} /><View style={s.hb2} />
 
-        {/* --- APARÊNCIA --- */}
-        <Card style={styles.card}>
-          <Card.Title title={t("appearance")} subtitle={t("themeAndColors")} left={(props) => <Avatar.Icon {...props} icon="palette" />} />
-          <Card.Content style={styles.content}>
-            <List.Item
-              title={t("darkTheme")}
-              left={() => <List.Icon icon="theme-light-dark" />}
-              right={() => <Switch value={isDarkTheme} onValueChange={toggleTheme} />}
-              style={styles.listItem}
-            />
-            <Divider style={{ marginVertical: 10 }} />
-            <Paragraph style={styles.paragraph}>{t("highlightColor")}</Paragraph>
-            <View style={styles.colorContainer}>
-              {cores.map((cor) => (
-                <TouchableOpacity key={cor.name} onPress={() => setPrimaryColor(cor.color)} style={[styles.colorButton, { backgroundColor: cor.color }]}>
-                  {theme.colors.primary === cor.color && <Avatar.Icon size={32} icon="check" style={styles.checkIcon} />}
-                </TouchableOpacity>
-              ))}
-            </View>
-          </Card.Content>
-        </Card>
+            {/* avatar */}
+            <View style={s.avatarWrap}>
+              {localProfile?.foto ? (
+                <Image source={{ uri: localProfile.foto }} style={s.avatarImg} />
+              ) : (
+                <View style={s.avatarEmpty}>
+                  <MaterialCommunityIcons name="account" size={40} color="rgba(255,255,255,0.85)" />
+                </View>
+              )}
+              <TouchableOpacity style={s.avatarBadge} onPress={pickGallery}>
+                <MaterialCommunityIcons name="camera-plus" size={14} color="#fff" />
+              </TouchableOpacity>
+            </View>
 
-        {/* --- PREFERÊNCIAS --- */}
-        <Card style={styles.card}>
-          <Card.Title title={t("preferences")} subtitle={`${t("language")} & ${t("fontSize")}`} left={(props) => <Avatar.Icon {...props} icon="tune" />} />
-          <Card.Content style={styles.content}>
-            <List.Accordion title={`${t("language")}: ${t(language)}`} left={(props) => <List.Icon {...props} icon="translate" />} id="language-accordion">
-              <List.Item title="Português (Brasil)" onPress={() => updatePreferences({ language: "pt-BR" })} />
-              <List.Item title="English" onPress={() => updatePreferences({ language: "en" })} />
-              <List.Item title="Español" onPress={() => updatePreferences({ language: "es" })} />
-            </List.Accordion>
-            <List.Accordion title={`${t("fontSize")}: ${t(fontSize)}`} left={(props) => <List.Icon {...props} icon="format-size" />} id="font-accordion">
-              <List.Item title={t("small")} onPress={() => updatePreferences({ fontSize: "small" })} />
-              <List.Item title={t("medium")} onPress={() => updatePreferences({ fontSize: "medium" })} />
-              <List.Item title={t("large")} onPress={() => updatePreferences({ fontSize: "large" })} />
-            </List.Accordion>
-          </Card.Content>
-        </Card>
+            <Text style={s.heroName}>{localProfile?.nome || t('user') || 'Seu nome'}</Text>
+            <Text style={s.heroRole}>{localProfile?.profissao || t('profile') || 'Perfil'}</Text>
+          </LinearGradient>
+        </Animatable.View>
 
-        {/* --- RESET --- */}
-        <Card style={styles.card}>
-          <Card.Title title={t("resetAccountTitle")} left={(props) => <Avatar.Icon {...props} icon="alert-circle-outline" />} />
-          <Card.Content>
-            <Button mode="contained" buttonColor={theme.colors.error} onPress={handleResetAccount}>{t("resetAccountTitle")}</Button>
-          </Card.Content>
-        </Card>
+        <View style={{ padding: 16, gap: 16 }}>
 
-      </ScrollView>
+          {/* ══ PERFIL ══ */}
+          <SectionCard
+            icon="account-edit" title={t('profile') || 'Perfil'} subtitle={t('editInfo') || 'Edite suas informações'}
+            color="#4F46E5" gradient={['#4F46E5','#818CF8']} theme={theme} delay={100}
+          >
+            <TextInput
+              label={t('name') || 'Nome'}
+              value={localProfile?.nome || ''}
+              onChangeText={v => setLocalProfile(p => ({ ...p, nome: v }))}
+              mode="outlined" style={fi.input} left={<TextInput.Icon icon="account-outline" />}
+            />
+            <TextInput
+              label={t('profession') || 'Profissão'}
+              value={localProfile?.profissao || ''}
+              onChangeText={v => setLocalProfile(p => ({ ...p, profissao: v }))}
+              mode="outlined" style={fi.input} left={<TextInput.Icon icon="briefcase-outline" />}
+            />
+            <TextInput
+              label={t('email') || 'E-mail'}
+              value={localProfile?.email || ''}
+              onChangeText={v => setLocalProfile(p => ({ ...p, email: v }))}
+              mode="outlined" style={fi.input} keyboardType="email-address"
+              left={<TextInput.Icon icon="email-outline" />}
+            />
 
-      <Portal>
-        <Dialog visible={resetDialogVisible} onDismiss={() => setResetDialogVisible(false)}>
-          <Dialog.Icon icon="alert" size={64} />
-          <Dialog.Title style={{ textAlign: 'center' }}>{t("resetAccountTitle")}</Dialog.Title>
-          <Dialog.Content>
-            <Paragraph style={{ textAlign: 'center' }}>{t("resetAccountMessage")}</Paragraph>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setResetDialogVisible(false)}>{t("cancel")}</Button>
-            <Button onPress={confirmResetAccount} buttonColor={theme.colors.error}>{t("delete")}</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+            {/* foto buttons */}
+            <View style={{ flexDirection:'row', gap:10 }}>
+              <TouchableOpacity style={[fi.photoBtn, { borderColor: '#4F46E5', backgroundColor: '#4F46E508', flex: 1 }]} onPress={pickGallery} activeOpacity={0.8}>
+                <MaterialCommunityIcons name="image-outline" size={16} color="#4F46E5" />
+                <Text style={[fi.photoBtnTxt, { color: '#4F46E5' }]}>{t('gallery') || 'Galeria'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[fi.photoBtn, { borderColor: '#4F46E5', backgroundColor: '#4F46E508', flex: 1 }]} onPress={pickCamera} activeOpacity={0.8}>
+                <MaterialCommunityIcons name="camera-outline" size={16} color="#4F46E5" />
+                <Text style={[fi.photoBtnTxt, { color: '#4F46E5' }]}>{t('camera') || 'Câmera'}</Text>
+              </TouchableOpacity>
+            </View>
 
-      <Snackbar visible={snackbarVisible} onDismiss={() => setSnackbarVisible(false)} duration={2000} action={{ label: "OK", onPress: () => setSnackbarVisible(false) }}>
-        {t("profileSaved")}
-      </Snackbar>
-    </>
-  );
+            {/* salvar */}
+            <TouchableOpacity onPress={salvar} activeOpacity={0.88} style={{ borderRadius: 16, overflow: 'hidden' }}>
+              <LinearGradient colors={['#4F46E5','#818CF8']} start={{ x:0,y:0 }} end={{ x:1,y:0 }} style={fi.saveBtn}>
+                <MaterialCommunityIcons name="content-save-check" size={18} color="#fff" />
+                <Text style={fi.saveBtnTxt}>{t('saveProfile') || 'Salvar Perfil'}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </SectionCard>
+
+          {/* ══ APARÊNCIA ══ */}
+          <SectionCard
+            icon="palette" title={t('appearance') || 'Aparência'} subtitle={t('themeAndColors') || 'Tema e cores'}
+            color="#059669" gradient={['#059669','#34D399']} theme={theme} delay={180}
+          >
+            {/* dark mode toggle */}
+            <TouchableOpacity
+              onPress={toggleTheme} activeOpacity={0.8}
+              style={[ap.row, { backgroundColor: isDarkTheme ? '#05966912' : theme.colors.surfaceVariant, borderColor: isDarkTheme ? '#059669' : theme.colors.outlineVariant }]}
+            >
+              <View style={[ap.iconBox, { backgroundColor: isDarkTheme ? '#059669' : theme.colors.outline }]}>
+                <MaterialCommunityIcons name={isDarkTheme ? 'weather-night' : 'white-balance-sunny'} size={18} color="#fff" />
+              </View>
+              <Text style={[ap.rowLabel, { color: theme.colors.onSurface }]}>{t('darkTheme') || 'Tema Escuro'}</Text>
+              <Switch value={isDarkTheme} onValueChange={toggleTheme} color="#059669" />
+            </TouchableOpacity>
+
+            {/* paleta de cores */}
+            <Text style={[ap.colorLabel, { color: theme.colors.onSurfaceVariant }]}>
+              {t('highlightColor') || 'Cor de destaque'}
+            </Text>
+            <View style={ap.palette}>
+              {COLOR_PALETTE.map(({ color, label }) => {
+                const active = theme.colors.primary === color;
+                return (
+                  <TouchableOpacity key={color} onPress={() => setPrimaryColor(color)} activeOpacity={0.85} style={{ alignItems: 'center', gap: 4 }}>
+                    <View style={[ap.colorBtn, { backgroundColor: color, borderWidth: active ? 3 : 0, borderColor: '#fff', elevation: active ? 6 : 2 }]}>
+                      {active && <MaterialCommunityIcons name="check" size={16} color="#fff" />}
+                    </View>
+                    <Text style={[ap.colorName, { color: active ? color : theme.colors.onSurfaceVariant }]}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </SectionCard>
+
+          {/* ══ PREFERÊNCIAS ══ */}
+          <SectionCard
+            icon="tune" title={t('preferences') || 'Preferências'} subtitle={`${t('language') || 'Idioma'} & ${t('fontSize') || 'Fonte'}`}
+            color="#D97706" gradient={['#D97706','#FCD34D']} theme={theme} delay={260}
+          >
+            {/* idioma */}
+            <TouchableOpacity
+              onPress={() => setLangSheet(true)} activeOpacity={0.8}
+              style={[pr.row, { borderColor: theme.colors.outlineVariant }]}
+            >
+              <View style={[pr.iconBox, { backgroundColor: '#D97706' }]}>
+                <MaterialCommunityIcons name="translate" size={16} color="#fff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[pr.rowLabel, { color: theme.colors.onSurface }]}>{t('language') || 'Idioma'}</Text>
+                <Text style={[pr.rowVal, { color: '#D97706' }]}>{`${LANG_FLAGS[language] || ''} ${LANG_NAMES[language] || language}`}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.onSurfaceVariant} />
+            </TouchableOpacity>
+
+            {/* tamanho da fonte */}
+            <TouchableOpacity
+              onPress={() => setFontSheet(true)} activeOpacity={0.8}
+              style={[pr.row, { borderColor: theme.colors.outlineVariant, marginTop: 10 }]}
+            >
+              <View style={[pr.iconBox, { backgroundColor: '#D97706' }]}>
+                <MaterialCommunityIcons name={FONT_SIZE_ICONS[fontSize] || 'format-size'} size={16} color="#fff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[pr.rowLabel, { color: theme.colors.onSurface }]}>{t('fontSize') || 'Tamanho da Fonte'}</Text>
+                <Text style={[pr.rowVal, { color: '#D97706' }]}>{FONT_LABELS[fontSize] || fontSize}</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.onSurfaceVariant} />
+            </TouchableOpacity>
+          </SectionCard>
+
+          {/* ══ ZONA DE PERIGO ══ */}
+          <SectionCard
+            icon="alert-circle" title={t('resetAccountTitle') || 'Resetar Conta'} subtitle="Apaga todos os dados permanentemente"
+            color="#EF4444" gradient={['#EF4444','#FCA5A5']} theme={theme} delay={340}
+          >
+            <View style={[dz.box, { backgroundColor: '#EF444410', borderColor: '#EF444430' }]}>
+              <MaterialCommunityIcons name="information-outline" size={16} color="#EF4444" />
+              <Text style={dz.boxTxt}>{t('resetAccountMessage') || 'Todos os currículos e preferências serão apagados.'}</Text>
+            </View>
+            <TouchableOpacity onPress={() => setResetDialog(true)} activeOpacity={0.88} style={[dz.btn, { backgroundColor: '#EF444415', borderColor: '#EF4444' }]}>
+              <MaterialCommunityIcons name="delete-forever-outline" size={18} color="#EF4444" />
+              <Text style={[dz.btnTxt, { color: '#EF4444' }]}>{t('resetAccountTitle') || 'Resetar Conta'}</Text>
+            </TouchableOpacity>
+          </SectionCard>
+
+        </View>
+      </ScrollView>
+
+      {/* ══ SHEET IDIOMA ══ */}
+      <Portal>
+        <Dialog visible={langSheet} onDismiss={() => setLangSheet(false)} style={{ borderRadius: 24 }}>
+          <Dialog.Title>{t('language') || 'Idioma'}</Dialog.Title>
+          <Dialog.Content style={{ gap: 8, paddingTop: 8 }}>
+            {[['pt-BR','🇧🇷','Português (Brasil)'],['en','🇺🇸','English'],['es','🇪🇸','Español']].map(([code, flag, name]) => {
+              const active = language === code;
+              return (
+                <TouchableOpacity
+                  key={code}
+                  onPress={() => { updatePreferences({ language: code }); setLangSheet(false); }}
+                  activeOpacity={0.8}
+                  style={[sh.option, { backgroundColor: active ? theme.colors.primary + '15' : theme.colors.surfaceVariant, borderColor: active ? theme.colors.primary : 'transparent', borderWidth: active ? 1.5 : 0 }]}
+                >
+                  <Text style={sh.flag}>{flag}</Text>
+                  <Text style={[sh.optionTxt, { color: theme.colors.onSurface, fontWeight: active ? '800' : '500' }]}>{name}</Text>
+                  {active && <MaterialCommunityIcons name="check-circle" size={18} color={theme.colors.primary} />}
+                </TouchableOpacity>
+              );
+            })}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setLangSheet(false)}>{t('cancel') || 'Fechar'}</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* ══ SHEET FONTE ══ */}
+      <Portal>
+        <Dialog visible={fontSheet} onDismiss={() => setFontSheet(false)} style={{ borderRadius: 24 }}>
+          <Dialog.Title>{t('fontSize') || 'Tamanho da Fonte'}</Dialog.Title>
+          <Dialog.Content style={{ gap: 8, paddingTop: 8 }}>
+            {[['small', FONT_SIZE_ICONS.small],['medium', FONT_SIZE_ICONS.medium],['large', FONT_SIZE_ICONS.large]].map(([size, icon]) => {
+              const active = fontSize === size;
+              return (
+                <TouchableOpacity
+                  key={size}
+                  onPress={() => { updatePreferences({ fontSize: size }); setFontSheet(false); }}
+                  activeOpacity={0.8}
+                  style={[sh.option, { backgroundColor: active ? theme.colors.primary + '15' : theme.colors.surfaceVariant, borderColor: active ? theme.colors.primary : 'transparent', borderWidth: active ? 1.5 : 0 }]}
+                >
+                  <MaterialCommunityIcons name={icon} size={20} color={active ? theme.colors.primary : theme.colors.onSurfaceVariant} />
+                  <Text style={[sh.optionTxt, { color: theme.colors.onSurface, fontWeight: active ? '800' : '500' }]}>{FONT_LABELS[size]}</Text>
+                  {active && <MaterialCommunityIcons name="check-circle" size={18} color={theme.colors.primary} />}
+                </TouchableOpacity>
+              );
+            })}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setFontSheet(false)}>{t('cancel') || 'Fechar'}</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      {/* ══ DIALOG RESET ══ */}
+      <Portal>
+        <Dialog visible={resetDialog} onDismiss={() => setResetDialog(false)} style={{ borderRadius: 24 }}>
+          <Dialog.Icon icon="alert" size={52} color="#EF4444" />
+          <Dialog.Title style={{ textAlign:'center' }}>{t('resetAccountTitle') || 'Resetar Conta'}</Dialog.Title>
+          <Dialog.Content>
+            <Text style={{ textAlign:'center', color: '#EF4444', lineHeight: 22 }}>{t('resetAccountMessage') || 'Todos os dados serão apagados.'}</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setResetDialog(false)}>{t('cancel') || 'Cancelar'}</Button>
+            <Button onPress={confirmReset} textColor="#EF4444">{t('delete') || 'Resetar'}</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <Snackbar visible={snackVisible} onDismiss={() => setSnackVisible(false)} duration={2200} action={{ label:'OK', onPress: () => setSnackVisible(false) }}>
+        {snackMsg || ''}
+      </Snackbar>
+    </>
+  );
 }
 
-const createStyles = (theme, fontSize) => StyleSheet.create({
-    container: { padding: 16, backgroundColor: theme.colors.background },
-    card: { backgroundColor: theme.colors.surface, marginBottom: 16, borderRadius: 12, elevation: 2, },
-    content: { gap: 12 },
-    input: { width: "100%", backgroundColor: 'transparent' },
-    listItem: { paddingHorizontal: 0 },
-    paragraph: { 
-      paddingHorizontal: 16, 
-      fontSize: fontSize === "small" ? 13 : fontSize === "large" ? 18 : 15, 
-      color: theme.colors.onSurfaceVariant, 
-    },
-    colorContainer: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-around", marginTop: 10, paddingHorizontal: 8 },
-    colorButton: { width: 48, height: 48, borderRadius: 24, margin: 5, justifyContent: 'center', alignItems: 'center', elevation: 2 },
-    checkIcon: { backgroundColor: 'transparent' },
+/* ─── styles ─── */
+const s = StyleSheet.create({
+  hero:       { paddingTop: Platform.OS === 'ios' ? 54 : 44, paddingBottom: 32, alignItems: 'center', overflow: 'hidden' },
+  hb1:        { position:'absolute', width:200, height:200, borderRadius:100, backgroundColor:'rgba(255,255,255,0.07)', top:-70, right:-50 },
+  hb2:        { position:'absolute', width:80,  height:80,  borderRadius:40,  backgroundColor:'rgba(255,255,255,0.07)', bottom:-10, left:10 },
+  avatarWrap: { position:'relative', marginBottom:12 },
+  avatarImg:  { width:90, height:90, borderRadius:26, borderWidth:3, borderColor:'rgba(255,255,255,0.9)' },
+  avatarEmpty:{ width:90, height:90, borderRadius:26, backgroundColor:'rgba(255,255,255,0.2)', justifyContent:'center', alignItems:'center', borderWidth:2, borderColor:'rgba(255,255,255,0.35)' },
+  avatarBadge:{ position:'absolute', bottom:-4, right:-4, width:28, height:28, borderRadius:9, backgroundColor:'rgba(0,0,0,0.45)', justifyContent:'center', alignItems:'center', borderWidth:2, borderColor:'#fff' },
+  heroName:   { color:'#fff', fontSize:20, fontWeight:'900', letterSpacing:0.2 },
+  heroRole:   { color:'rgba(255,255,255,0.8)', fontSize:14, marginTop:3 },
+});
+
+const sc = StyleSheet.create({
+  card:   { borderRadius:20, borderWidth:1.5, overflow:'hidden', elevation:3, shadowColor:'#000', shadowOffset:{width:0,height:3}, shadowOpacity:0.07, shadowRadius:8 },
+  header: { flexDirection:'row', alignItems:'center', gap:12, padding:16, paddingBottom:0 },
+  iconBox:{ width:42, height:42, borderRadius:13, justifyContent:'center', alignItems:'center', flexShrink:0 },
+  title:  { fontSize:16, fontWeight:'800' },
+  sub:    { fontSize:12, marginTop:2 },
+  body:   { padding:16, gap:12 },
+});
+
+const or = StyleSheet.create({
+  row:   { flexDirection:'row', alignItems:'center', paddingVertical:12 },
+  label: { flex:1, fontSize:14 },
+  val:   { fontSize:13, fontWeight:'700', marginRight:4 },
+});
+
+const fi = StyleSheet.create({
+  input:    { backgroundColor:'transparent' },
+  photoBtn: { flexDirection:'row', alignItems:'center', justifyContent:'center', gap:7, paddingVertical:11, borderRadius:14, borderWidth:1.5 },
+  photoBtnTxt: { fontSize:13, fontWeight:'700' },
+  saveBtn:  { flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, paddingVertical:14 },
+  saveBtnTxt:{ color:'#fff', fontWeight:'900', fontSize:15 },
+});
+
+const ap = StyleSheet.create({
+  row:       { flexDirection:'row', alignItems:'center', gap:12, padding:14, borderRadius:16, borderWidth:1.5 },
+  iconBox:   { width:36, height:36, borderRadius:10, justifyContent:'center', alignItems:'center', flexShrink:0 },
+  rowLabel:  { flex:1, fontSize:14, fontWeight:'600' },
+  colorLabel:{ fontSize:13, fontWeight:'700', marginTop:4, marginBottom:12 },
+  palette:   { flexDirection:'row', flexWrap:'wrap', gap:12 },
+  colorBtn:  { width:44, height:44, borderRadius:14, justifyContent:'center', alignItems:'center', elevation:2 },
+  colorName: { fontSize:10, fontWeight:'600', textAlign:'center', maxWidth:52 },
+});
+
+const pr = StyleSheet.create({
+  row:     { flexDirection:'row', alignItems:'center', gap:12, padding:14, borderRadius:16, borderWidth:1 },
+  iconBox: { width:34, height:34, borderRadius:10, justifyContent:'center', alignItems:'center', flexShrink:0 },
+  rowLabel:{ fontSize:14, fontWeight:'600' },
+  rowVal:  { fontSize:12, fontWeight:'700', marginTop:2 },
+});
+
+const dz = StyleSheet.create({
+  box:    { flexDirection:'row', alignItems:'flex-start', gap:8, padding:12, borderRadius:12, borderWidth:1 },
+  boxTxt: { flex:1, fontSize:13, lineHeight:20, color:'#EF4444' },
+  btn:    { flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8, paddingVertical:13, borderRadius:14, borderWidth:1.5 },
+  btnTxt: { fontSize:14, fontWeight:'800' },
+});
+
+const sh = StyleSheet.create({
+  option:    { flexDirection:'row', alignItems:'center', gap:12, padding:14, borderRadius:14 },
+  flag:      { fontSize:22 },
+  optionTxt: { flex:1, fontSize:15 },
 });

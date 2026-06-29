@@ -1,6 +1,7 @@
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system/legacy';
 
 // 1. IMPORTAÇÃO ATUALIZADA: Importando todos os 8 templates
 import {
@@ -68,19 +69,27 @@ export async function gerarPDF(curriculo, templateId = "classic", corPrimaria, t
     }
 
     const nomeUsuario = curriculo.dadosPessoais?.nome || "Curriculo";
-    const fileName = `${nomeUsuario.replace(/\s+/g, "_")}_${templateId}.pdf`;
+    // Tira os acentos e ajusta espaços para evitar problemas no nome do arquivo
+    const cleanName = nomeUsuario.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "_");
+    const fileName = `${cleanName}_${templateId}.pdf`;
 
     const { uri } = await Print.printToFileAsync({
       html: htmlContent,
       base64: false,
     });
+    
+    const newUri = `${FileSystem.cacheDirectory}${fileName}`;
+    await FileSystem.moveAsync({
+      from: uri,
+      to: newUri,
+    });
 
     await adicionarAoHistorico(curriculo, templateId);
 
     if (await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(uri, { dialogTitle: fileName });
+      await Sharing.shareAsync(newUri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: fileName });
     } else {
-      alert(`📄 PDF gerado com sucesso! Disponível em: ${uri}`);
+      alert(`📄 PDF gerado com sucesso! Disponível em: ${newUri}`);
     }
   } catch (error) {
     console.log("❌ Erro ao gerar PDF:", error);
