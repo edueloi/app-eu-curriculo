@@ -44,7 +44,7 @@ const TABS = [
 ];
 
 export default function TelaFormulario({ navigation, route }) {
-  const { t }  = useContext(UserPreferencesContext);
+  const { t, language }  = useContext(UserPreferencesContext);
   const theme  = useTheme();
   const tabScrollRef = useRef(null);
 
@@ -273,9 +273,13 @@ export default function TelaFormulario({ navigation, route }) {
             <FieldCard icon="account-outline"     label={t('name')}      placeholder={t('placeholder_fullName')}  value={curriculo.dadosPessoais.nome}     onChangeText={v => inp('dadosPessoais','nome',v)}     theme={theme} s={s} />
             <FieldCard icon="email-outline"       label={t('email')}     placeholder={t('placeholder_email')}     value={curriculo.dadosPessoais.email}    onChangeText={v => inp('dadosPessoais','email',v)}    theme={theme} s={s} keyboardType="email-address" />
             <FieldCard icon="phone-outline"       label={t('phone')}     placeholder={t('placeholder_phone')}     value={curriculo.dadosPessoais.telefone} onChangeText={v => inp('dadosPessoais','telefone',v)} theme={theme} s={s} keyboardType="phone-pad" />
-            <View style={[s.fieldWrap, { backgroundColor: theme.colors.surface }]}>
-              <CustomDropDown label={t('state')} value={curriculo.dadosPessoais.estado} setValue={v => inp('dadosPessoais','estado',v)} list={stateList} />
-            </View>
+            {language === 'pt-BR' ? (
+              <View style={[s.fieldWrap, { backgroundColor: theme.colors.surface }]}>
+                <CustomDropDown label={t('state')} value={curriculo.dadosPessoais.estado} setValue={v => inp('dadosPessoais','estado',v)} list={stateList} />
+              </View>
+            ) : (
+              <FieldCard icon="map-marker-outline" label={t('state')} placeholder={t('placeholder_city')} value={curriculo.dadosPessoais.estado} onChangeText={v => inp('dadosPessoais','estado',v)} theme={theme} s={s} />
+            )}
             <FieldCard icon="map-marker-outline"  label={t('city')}      placeholder={t('placeholder_city')}      value={curriculo.dadosPessoais.cidade}   onChangeText={v => inp('dadosPessoais','cidade',v)}   theme={theme} s={s} />
             <FieldCard icon="linkedin"            label={t('linkedin')}  placeholder={t('placeholder_linkedin')}  value={curriculo.dadosPessoais.linkedin} onChangeText={v => inp('dadosPessoais','linkedin',v)} theme={theme} s={s} />
             <FieldCard icon="web"                 label={t('portfolio')} placeholder={t('placeholder_portfolio')} value={curriculo.dadosPessoais.site}     onChangeText={v => inp('dadosPessoais','site',v)}     theme={theme} s={s} />

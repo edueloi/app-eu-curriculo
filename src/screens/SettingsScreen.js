@@ -22,15 +22,15 @@ const LANG_FLAGS = { 'pt-BR': '🇧🇷', en: '🇺🇸', es: '🇪🇸' };
 const FONT_SIZE_ICONS = { small: 'format-font-size-decrease', medium: 'format-size', large: 'format-font-size-increase' };
 
 /* ── paleta de cores ── */
-const COLOR_PALETTE = [
-  { color: CoresPadrao.azulMarinho,    label: 'Azul Marinho' },
-  { color: CoresPadrao.azulAcinzentado,label: 'Índigo' },
-  { color: '#059669',                  label: 'Verde' },
-  { color: '#DC2626',                  label: 'Vermelho' },
-  { color: '#D97706',                  label: 'Âmbar' },
-  { color: '#7C3AED',                  label: 'Roxo' },
-  { color: '#BE185D',                  label: 'Rosa' },
-  { color: '#0891B2',                  label: 'Ciano' },
+const COLOR_HEX = [
+  { color: CoresPadrao.azulMarinho,    key: 'navyBlue' },
+  { color: CoresPadrao.azulAcinzentado,key: 'grayishBlue' },
+  { color: '#059669',                  key: 'green' },
+  { color: '#DC2626',                  key: 'red' },
+  { color: '#D97706',                  key: 'amber' },
+  { color: '#7C3AED',                  key: 'purple' },
+  { color: '#BE185D',                  key: 'pink' },
+  { color: '#0891B2',                  key: 'cyan' },
 ];
 
 /* ─────────── sub-componentes ─────────── */
@@ -74,6 +74,9 @@ export default function SettingsScreen({ navigation }) {
   const [resetDialog, setResetDialog]   = useState(false);
   const [langSheet, setLangSheet]       = useState(false);
   const [fontSheet, setFontSheet]       = useState(false);
+
+  // Paleta com labels traduzidos dinamicamente
+  const COLOR_PALETTE = COLOR_HEX.map(c => ({ ...c, label: t(c.key) || c.key }));
 
   useEffect(() => { setLocalProfile(profile || {}); }, [profile]);
 
@@ -267,7 +270,7 @@ export default function SettingsScreen({ navigation }) {
 
           {/* ══ ZONA DE PERIGO ══ */}
           <SectionCard
-            icon="alert-circle" title={t('resetAccountTitle') || 'Resetar Conta'} subtitle="Apaga todos os dados permanentemente"
+            icon="alert-circle" title={t('resetAccountTitle') || 'Resetar Conta'} subtitle={t('resetAccountSubtitle') || 'Apaga todos os dados permanentemente'}
             color="#EF4444" gradient={['#EF4444','#FCA5A5']} theme={theme} delay={340}
           >
             <View style={[dz.box, { backgroundColor: '#EF444410', borderColor: '#EF444430' }]}>

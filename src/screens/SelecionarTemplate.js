@@ -17,14 +17,14 @@ const FAV_KEY = '@app_curriculos:fav_templates';
 
 /* gradientes reais por template (par de cores) */
 const TEMPLATE_META = {
-  classic:    { icon: 'file-document-outline',  gradient: ['#1A237E','#3949AB'], label: 'Clássico' },
-  creative:   { icon: 'palette-outline',         gradient: ['#AD1457','#E91E8C'], label: 'Criativo'  },
-  corporate:  { icon: 'domain',                  gradient: ['#00695C','#00BFA5'], label: 'Corporativo' },
-  elegant:    { icon: 'star-outline',             gradient: ['#6A1B9A','#AB47BC'], label: 'Elegante'  },
-  minimalist: { icon: 'minus-circle-outline',    gradient: ['#37474F','#607D8B'], label: 'Minimalista' },
-  inverted:   { icon: 'swap-horizontal',         gradient: ['#0277BD','#29B6F6'], label: 'Invertido' },
-  split:      { icon: 'view-column-outline',     gradient: ['#4527A0','#7E57C2'], label: 'Split'     },
-  dark:       { icon: 'weather-night',            gradient: ['#212121','#424242'], label: 'Dark'      },
+  classic:    { icon: 'file-document-outline',  gradient: ['#1A237E','#3949AB'] },
+  creative:   { icon: 'palette-outline',         gradient: ['#AD1457','#E91E8C'] },
+  corporate:  { icon: 'domain',                  gradient: ['#00695C','#00BFA5'] },
+  elegant:    { icon: 'star-outline',             gradient: ['#6A1B9A','#AB47BC'] },
+  minimalist: { icon: 'minus-circle-outline',    gradient: ['#37474F','#607D8B'] },
+  inverted:   { icon: 'swap-horizontal',         gradient: ['#0277BD','#29B6F6'] },
+  split:      { icon: 'view-column-outline',     gradient: ['#4527A0','#7E57C2'] },
+  dark:       { icon: 'weather-night',            gradient: ['#212121','#424242'] },
 };
 
 /* Filtragem de categorias */
@@ -66,6 +66,7 @@ function FavButton({ isFav, onPress, color }) {
 /* ── card de template ── */
 function TemplateCard({ tpl, isSelected, isFav, onSelect, onPreview, onExport, onFav, index }) {
   const theme = useTheme();
+  const { t } = useContext(UserPreferencesContext);
   const meta = TEMPLATE_META[tpl.id];
   const [g1, g2] = meta.gradient;
 
@@ -130,7 +131,7 @@ function TemplateCard({ tpl, isSelected, isFav, onSelect, onPreview, onExport, o
             activeOpacity={0.8}
           >
             <MaterialCommunityIcons name="eye-outline" size={13} color={theme.colors.primary} />
-            <Text style={[cs.btnTxt, { color: theme.colors.primary }]}>Ver</Text>
+            <Text style={[cs.btnTxt, { color: theme.colors.primary }]}>{t('preview') || 'Ver'}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[cs.btn, { backgroundColor: theme.colors.primary, flex: 1.4 }]}
