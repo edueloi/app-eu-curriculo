@@ -190,7 +190,7 @@ export function AppNavigator() {
   return (
     <Drawer.Navigator
       drawerContent={(props) => <CustomDrawerContent {...props} />}
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerShown: true,
         headerStyle: {
           backgroundColor: theme.colors.background,
@@ -201,6 +201,16 @@ export function AppNavigator() {
         },
         headerTintColor: theme.colors.onSurface,
         headerTitleStyle: { fontWeight: '800', fontSize: 17 },
+        headerLeft: () => (
+          <TouchableOpacity
+            style={{ marginLeft: 16, padding: 8 }}
+            onPress={() => navigation.toggleDrawer()}
+            hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons name="menu" size={24} color={theme.colors.onSurface} />
+          </TouchableOpacity>
+        ),
         drawerType: 'front',
         overlayColor: 'rgba(0,0,0,0.55)',
         drawerStyle: {
@@ -216,7 +226,7 @@ export function AppNavigator() {
           shadowRadius: 28,
         },
         swipeEnabled: true,
-      }}
+      })}
     >
       <Drawer.Screen name="Início"          component={TelaInicial}    options={{ title: t('dashboard') }} />
       <Drawer.Screen name="MeusCurriculos"  component={ListaCurriculos} options={{ title: t('resumes') }} />

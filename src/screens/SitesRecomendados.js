@@ -512,6 +512,7 @@ function Stars({ count }) {
 /* ─── card de plataforma ─── */
 function PlatformCard({ p, lang, theme }) {
   const [open, setOpen] = useState(false);
+  const { t } = useContext(UserPreferencesContext);
   const c = p.content[lang] || p.content['pt-BR'];
 
   const statKeys = Object.keys(p.stats);
@@ -557,7 +558,7 @@ function PlatformCard({ p, lang, theme }) {
         >
           <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color={p.gradient[0]} />
           <Text style={[s.tipsToggleText, { color: p.gradient[0] }]}>
-            {open ? 'Ocultar dicas' : 'Ver dicas de uso'}
+            {open ? t('hideTips') : t('showTips')}
           </Text>
           <MaterialCommunityIcons name={open ? 'chevron-up' : 'chevron-down'} size={18} color={p.gradient[0]} />
         </TouchableOpacity>
@@ -583,7 +584,7 @@ function PlatformCard({ p, lang, theme }) {
         >
           <LinearGradient colors={p.gradient} start={{ x:0,y:0 }} end={{ x:1,y:0 }} style={s.accessBtn}>
             <MaterialCommunityIcons name="open-in-new" size={17} color="#fff" />
-            <Text style={s.accessBtnText}>Acessar plataforma</Text>
+            <Text style={s.accessBtnText}>{t('accessSite')}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </View>

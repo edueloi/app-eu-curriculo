@@ -21,7 +21,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.karengomes.appcurriculos"
+      "package": "com.curriculo.expresso"
     },
     "web": {
       "favicon": "./assets/favicon.png"

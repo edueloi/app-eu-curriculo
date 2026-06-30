@@ -132,7 +132,9 @@ export default function TelaInicial({ navigation }) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[s.profileCardTitle, { color: theme.colors.onSurface }]}>
-                Perfil {profileProgress === 100 ? '✅' : `${profileProgress}% completo`}
+                {profileProgress === 100 
+                  ? t('profileComplete') 
+                  : t('profileProgress').replace('{progress}', profileProgress)}
               </Text>
               <View style={[s.progressTrack, { backgroundColor: theme.colors.surfaceVariant }]}>
                 <Animatable.View
@@ -149,7 +151,7 @@ export default function TelaInicial({ navigation }) {
               onPress={() => navigation.navigate('Configurações')}
               style={[s.profileCta, { backgroundColor: theme.colors.primary + '15', borderColor: theme.colors.primary }]}
             >
-              <Text style={[s.profileCtaText, { color: theme.colors.primary }]}>Completar</Text>
+              <Text style={[s.profileCtaText, { color: theme.colors.primary }]}>{t('btnComplete')}</Text>
             </TouchableOpacity>
           )}
         </Animatable.View>
@@ -224,7 +226,7 @@ export default function TelaInicial({ navigation }) {
 
         {/* ══════════ DICAS (scroll horizontal) ══════════ */}
         <Animatable.View animation="fadeInUp" duration={500} delay={500}>
-          <SectionLabel label="Dicas de Carreira" theme={theme} />
+          <SectionLabel label={t('careerTips')} theme={theme} />
         </Animatable.View>
         <ScrollView
           horizontal
