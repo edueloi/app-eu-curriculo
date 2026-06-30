@@ -976,7 +976,6 @@ const s = StyleSheet.create({
   hb2:         { position:'absolute', width:80,  height:80,  borderRadius:40,  backgroundColor:'rgba(255,255,255,0.07)', bottom:-20, left:10 },
   backBtn:     { width:38, height:38, borderRadius:11, backgroundColor:'rgba(255,255,255,0.2)', justifyContent:'center', alignItems:'center' },
   navBar:      { position:'absolute', top:0, left:0, right:0, zIndex:100, flexDirection:'row', justifyContent:'space-between', paddingHorizontal:16, paddingBottom:10 },
-  navBtn:      { width:40, height:40, borderRadius:12, backgroundColor:'rgba(0,0,0,0.25)', justifyContent:'center', alignItems:'center' },
   heroTitle:   { color:'#fff', fontSize:24, fontWeight:'900', letterSpacing:0.2 },
   heroSub:     { color:'rgba(255,255,255,0.85)', fontSize:14, marginTop:6, lineHeight:20 },
   heroBadge:   { flexDirection:'row', alignItems:'center', gap:6, marginTop:14, backgroundColor:'rgba(255,255,255,0.2)', alignSelf:'flex-start', paddingVertical:6, paddingHorizontal:14, borderRadius:20 },

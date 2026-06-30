@@ -31,6 +31,12 @@
         "projectId": "ea60f3fc-63aa-44bd-a25a-c8823f1f638d"
       }
     },
-    "owner": "edueloi"
+    "owner": "edueloi",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ea60f3fc-63aa-44bd-a25a-c8823f1f638d"
+    }
   }
 }
