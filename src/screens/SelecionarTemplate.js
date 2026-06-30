@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import {
-  StyleSheet, View, FlatList, TouchableOpacity,
+  StyleSheet, View, FlatList, TouchableOpacity, TextInput,
   Dimensions, Animated, Easing, Platform, StatusBar,
 } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
@@ -17,14 +17,18 @@ const CARD_W = (width - 48) / 2;
 const FAV_KEY = '@app_curriculos:fav_templates';
 
 const TEMPLATE_META = {
-  classic:    { icon: 'file-document-outline', gradient: ['#4F46E5','#818CF8'], accent: '#4F46E5' },
-  creative:   { icon: 'palette-outline',        gradient: ['#EC4899','#F472B6'], accent: '#EC4899' },
-  corporate:  { icon: 'domain',                 gradient: ['#0891B2','#38BDF8'], accent: '#0891B2' },
-  elegant:    { icon: 'star-outline',            gradient: ['#7C3AED','#A78BFA'], accent: '#7C3AED' },
-  minimalist: { icon: 'minus-circle-outline',   gradient: ['#475569','#94A3B8'], accent: '#475569' },
-  inverted:   { icon: 'swap-horizontal',        gradient: ['#059669','#34D399'], accent: '#059669' },
-  split:      { icon: 'view-column-outline',    gradient: ['#D97706','#FCD34D'], accent: '#D97706' },
-  dark:       { icon: 'weather-night',           gradient: ['#1E293B','#475569'], accent: '#334155' },
+  classic:    { icon: 'file-document-outline',  gradient: ['#4F46E5','#818CF8'], accent: '#4F46E5' },
+  creative:   { icon: 'palette-outline',         gradient: ['#EC4899','#F472B6'], accent: '#EC4899' },
+  corporate:  { icon: 'domain',                  gradient: ['#0891B2','#38BDF8'], accent: '#0891B2' },
+  elegant:    { icon: 'star-outline',             gradient: ['#7C3AED','#A78BFA'], accent: '#7C3AED' },
+  minimalist: { icon: 'minus-circle-outline',    gradient: ['#475569','#94A3B8'], accent: '#475569' },
+  inverted:   { icon: 'swap-horizontal',         gradient: ['#059669','#34D399'], accent: '#059669' },
+  split:      { icon: 'view-column-outline',     gradient: ['#D97706','#FCD34D'], accent: '#D97706' },
+  dark:       { icon: 'weather-night',            gradient: ['#1E293B','#475569'], accent: '#334155' },
+  timeline:   { icon: 'timeline-clock-outline',  gradient: ['#0F766E','#2DD4BF'], accent: '#0F766E' },
+  sideright:  { icon: 'page-layout-sidebar-right', gradient: ['#1D4ED8','#60A5FA'], accent: '#1D4ED8' },
+  bold:       { icon: 'format-bold',             gradient: ['#7C3AED','#C084FC'], accent: '#7C3AED' },
+  compact:    { icon: 'text-box-outline',         gradient: ['#0369A1','#38BDF8'], accent: '#0369A1' },
 };
 
 const CATS = ['all', 'fav', 'pro', 'creative'];
@@ -34,9 +38,12 @@ const CAT_LABELS = {
   'es':    { all: 'Todos', fav: 'Favoritos', pro: 'Profesional',  creative: 'Creativo'  },
 };
 const TEMPLATE_CATS = {
-  classic: ['all','pro'], creative: ['all','creative'], corporate: ['all','pro'],
-  elegant: ['all','pro','creative'], minimalist: ['all','pro'], inverted: ['all','creative'],
-  split: ['all','creative'], dark: ['all','creative'],
+  classic:   ['all','pro'],           creative:  ['all','creative'],
+  corporate: ['all','pro'],           elegant:   ['all','pro','creative'],
+  minimalist:['all','pro'],           inverted:  ['all','creative'],
+  split:     ['all','creative'],      dark:      ['all','creative'],
+  timeline:  ['all','pro'],           sideright: ['all','pro'],
+  bold:      ['all','pro','creative'], compact:  ['all','pro'],
 };
 
 /* ── Botão favorito ── */
@@ -50,9 +57,17 @@ function FavButton({ isFav, onPress }) {
     onPress();
   };
   return (
-    <TouchableOpacity onPress={tap} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} activeOpacity={0.7}>
-      <Animated.View style={[cs.favIconWrap, { transform: [{ scale }], backgroundColor: isFav ? '#FFF1F2' : 'rgba(255,255,255,0.22)' }]}>
-        <MaterialCommunityIcons name={isFav ? 'heart' : 'heart-outline'} size={16} color={isFav ? '#F43F5E' : '#fff'} />
+    <TouchableOpacity onPress={tap} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} activeOpacity={0.7}>
+      <Animated.View style={[
+        cs.favIconWrap,
+        {
+          transform: [{ scale }],
+          backgroundColor: isFav ? '#FFF1F2' : 'rgba(0,0,0,0.28)',
+          borderWidth: isFav ? 1.5 : 0,
+          borderColor: isFav ? '#FDA4AF' : 'transparent',
+        },
+      ]}>
+        <MaterialCommunityIcons name={isFav ? 'heart' : 'heart-outline'} size={18} color={isFav ? '#F43F5E' : '#fff'} />
       </Animated.View>
     </TouchableOpacity>
   );
@@ -64,93 +79,92 @@ function TemplateCard({ tpl, isSelected, isFav, onSelect, onPreview, onExport, o
   const { t, language } = useContext(UserPreferencesContext);
   const meta = TEMPLATE_META[tpl.id];
 
-  const PREVIEW_LABEL = { 'pt-BR': 'Ver', en: 'View', es: 'Ver' };
-  const lbl = PREVIEW_LABEL[language] || 'Ver';
-
   return (
     <Animatable.View animation="fadeInUp" duration={400} delay={index * 60} style={{ width: CARD_W, marginBottom: 16 }}>
       <TouchableOpacity
-        activeOpacity={0.9}
+        activeOpacity={0.92}
         onPress={() => onSelect(tpl.id)}
-        style={[
-          cs.card,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: isSelected ? meta.accent : theme.colors.outlineVariant,
-            borderWidth: isSelected ? 2.5 : 1,
-            shadowColor: meta.accent,
-          },
-        ]}
+        style={[cs.card, {
+          backgroundColor: theme.colors.surface,
+          borderColor: isSelected ? meta.accent : theme.colors.outlineVariant,
+          borderWidth: isSelected ? 2.5 : 1,
+          shadowColor: isSelected ? meta.accent : '#000',
+          shadowOpacity: isSelected ? 0.28 : 0.1,
+          elevation: isSelected ? 8 : 3,
+        }]}
       >
-        {/* ── Preview visual ── */}
+        {/* ── Preview com gradiente ── */}
         <LinearGradient colors={meta.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={cs.preview}>
-          {/* blob decorativo */}
-          <View style={[cs.blob, { backgroundColor: 'rgba(255,255,255,0.12)', width: 90, height: 90, top: -30, right: -20 }]} />
-          <View style={[cs.blob, { backgroundColor: 'rgba(255,255,255,0.08)', width: 60, height: 60, bottom: -10, left: -10 }]} />
+          {/* blobs */}
+          <View style={[cs.blob, { backgroundColor: 'rgba(255,255,255,0.13)', width: 100, height: 100, top: -35, right: -25 }]} />
+          <View style={[cs.blob, { backgroundColor: 'rgba(255,255,255,0.07)', width: 55, height: 55, bottom: -8, left: -12 }]} />
 
-          {/* papel simulado */}
+          {/* miniatura de documento */}
           <View style={cs.paper}>
-            <View style={cs.paperAvatar} />
-            <View style={{ flex: 1, gap: 4 }}>
-              <View style={[cs.paperLine, { width: '80%', backgroundColor: meta.accent }]} />
-              <View style={[cs.paperLine, { width: '55%', backgroundColor: '#CBD5E1' }]} />
+            {/* header do doc */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 7 }}>
+              <View style={[cs.paperAvatar, { backgroundColor: meta.accent + '44' }]} />
+              <View style={{ flex: 1, gap: 3 }}>
+                <View style={[cs.paperLine, { width: '90%', height: 5, backgroundColor: meta.accent + 'BB' }]} />
+                <View style={[cs.paperLine, { width: '60%', height: 4, backgroundColor: '#CBD5E1' }]} />
+              </View>
             </View>
             <View style={[cs.paperDivider]} />
-            <View style={{ gap: 5, paddingTop: 2 }}>
+            {/* corpo do doc */}
+            <View style={{ gap: 4, paddingTop: 4 }}>
               <View style={[cs.paperLine, { width: '100%' }]} />
-              <View style={[cs.paperLine, { width: '85%' }]} />
-              <View style={[cs.paperLine, { width: '90%' }]} />
-              <View style={[cs.paperLine, { width: '70%' }]} />
+              <View style={[cs.paperLine, { width: '88%' }]} />
+              <View style={[cs.paperLine, { width: '75%' }]} />
+              <View style={[cs.paperDivider, { marginTop: 3 }]} />
+              <View style={[cs.paperLine, { width: '95%' }]} />
+              <View style={[cs.paperLine, { width: '80%' }]} />
             </View>
           </View>
 
-          {/* ícone do estilo */}
-          <View style={cs.styleIcon}>
-            <MaterialCommunityIcons name={meta.icon} size={18} color="rgba(255,255,255,0.95)" />
+          {/* ícone do estilo — canto inferior esquerdo */}
+          <View style={[cs.styleIcon, { backgroundColor: 'rgba(0,0,0,0.3)' }]}>
+            <MaterialCommunityIcons name={meta.icon} size={16} color="#fff" />
           </View>
 
-          {/* favorito */}
+          {/* coração favorito — canto superior direito, bem visível */}
           <View style={cs.favPos}>
             <FavButton isFav={isFav} onPress={() => onFav(tpl.id)} />
           </View>
 
-          {/* badge selecionado */}
-          {isSelected && (
-            <Animatable.View animation="zoomIn" duration={220} style={[cs.checkBadge, { backgroundColor: meta.accent }]}>
-              <MaterialCommunityIcons name="check-bold" size={12} color="#fff" />
+          {/* check quando selecionado — canto superior esquerdo */}
+          {isSelected ? (
+            <Animatable.View animation="zoomIn" duration={200} style={cs.checkBadge}>
+              <LinearGradient colors={meta.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={cs.checkBadgeInner}>
+                <MaterialCommunityIcons name="check-bold" size={11} color="#fff" />
+              </LinearGradient>
             </Animatable.View>
-          )}
+          ) : null}
         </LinearGradient>
 
         {/* ── Info ── */}
-        <View style={cs.info}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+        <View style={[cs.info, { borderTopColor: meta.accent + '22' }]}>
+          {/* nome + ponto de cor */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 }}>
             <View style={[cs.accentDot, { backgroundColor: meta.accent }]} />
-            <Text style={[cs.name, { color: theme.colors.onSurface }]} numberOfLines={1}>{tpl.name}</Text>
+            <Text style={[cs.name, { color: theme.colors.onSurface, flex: 1 }]} numberOfLines={1}>{tpl.name}</Text>
           </View>
           <Text style={[cs.desc, { color: theme.colors.onSurfaceVariant }]} numberOfLines={2}>{tpl.desc}</Text>
         </View>
 
-        {/* ── Ações — dois botões lado a lado sem texto longo ── */}
+        {/* ── Ações ── */}
         <View style={cs.actions}>
-          {/* Botão preview: ícone + label curto */}
           <TouchableOpacity
-            style={[cs.btnOutline, { borderColor: meta.accent }]}
+            style={[cs.btnOutline, { borderColor: meta.accent + '66', backgroundColor: meta.accent + '0D' }]}
             onPress={() => onPreview(tpl.id)}
             activeOpacity={0.8}
           >
-            <MaterialCommunityIcons name="eye-outline" size={15} color={meta.accent} />
-            <Text style={[cs.btnTxt, { color: meta.accent }]} numberOfLines={1}>{lbl}</Text>
+            <MaterialCommunityIcons name="eye-outline" size={14} color={meta.accent} />
+            <Text style={[cs.btnTxt, { color: meta.accent }]}>Ver</Text>
           </TouchableOpacity>
 
-          {/* Botão PDF: gradiente */}
-          <TouchableOpacity
-            style={[cs.btnPdf, { overflow: 'hidden' }]}
-            onPress={() => onExport(tpl.id)}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity style={cs.btnPdf} onPress={() => onExport(tpl.id)} activeOpacity={0.85}>
             <LinearGradient colors={meta.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={cs.btnPdfGrad}>
-              <MaterialCommunityIcons name="file-pdf-box" size={15} color="#fff" />
+              <MaterialCommunityIcons name="file-pdf-box" size={14} color="#fff" />
               <Text style={[cs.btnTxt, { color: '#fff' }]}>PDF</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -168,6 +182,7 @@ export default function SelecionarTemplate({ route, navigation }) {
   const [selectedId, setSelectedId] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [activeCat, setActiveCat] = useState('all');
+  const [search, setSearch] = useState('');
 
   const lang = language && CAT_LABELS[language] ? language : 'pt-BR';
 
@@ -184,19 +199,28 @@ export default function SelecionarTemplate({ route, navigation }) {
   };
 
   const templates = [
-    { id: 'classic',    name: t('template_classic_name')    || 'Clássico',    desc: t('template_classic_desc')    || 'Design limpo, tradicional e objetivo.' },
-    { id: 'creative',   name: t('template_creative_name')   || 'Criativo',    desc: t('template_creative_desc')   || 'Layout arrojado para design e marketing.' },
-    { id: 'corporate',  name: t('template_corporate_name')  || 'Corporativo', desc: t('template_corporate_desc')  || 'Seriedade e confiança com tons de azul.' },
-    { id: 'elegant',    name: t('template_elegant_name')    || 'Elegante',    desc: t('template_elegant_desc')    || 'Toque delicado e sofisticado.' },
-    { id: 'minimalist', name: t('template_minimalist_name') || 'Minimalista', desc: t('template_minimalist_desc') || 'Elegância na simplicidade.' },
-    { id: 'inverted',   name: t('template_inverted_name')   || 'Invertido',   desc: t('template_inverted_desc')   || 'Estilo moderno com cores invertidas.' },
-    { id: 'split',      name: t('template_split_name')      || 'Split',       desc: t('template_split_desc')      || 'Layout dividido em duas colunas.' },
-    { id: 'dark',       name: t('template_dark_name')       || 'Dark',        desc: t('template_dark_desc')       || 'Para quem quer se destacar.' },
+    { id: 'classic',    name: t('template_classic_name')    || 'Clássico',       desc: t('template_classic_desc')    || 'Design limpo, tradicional e objetivo.' },
+    { id: 'creative',   name: t('template_creative_name')   || 'Criativo',       desc: t('template_creative_desc')   || 'Layout arrojado para design e marketing.' },
+    { id: 'corporate',  name: t('template_corporate_name')  || 'Corporativo',    desc: t('template_corporate_desc')  || 'Seriedade e confiança com tons de azul.' },
+    { id: 'elegant',    name: t('template_elegant_name')    || 'Elegante',       desc: t('template_elegant_desc')    || 'Toque delicado e sofisticado.' },
+    { id: 'minimalist', name: t('template_minimalist_name') || 'Minimalista',    desc: t('template_minimalist_desc') || 'Elegância na simplicidade.' },
+    { id: 'inverted',   name: t('template_inverted_name')   || 'Invertido',      desc: t('template_inverted_desc')   || 'Estilo moderno com cores invertidas.' },
+    { id: 'split',      name: t('template_split_name')      || 'Split',          desc: t('template_split_desc')      || 'Layout dividido em duas colunas.' },
+    { id: 'dark',       name: t('template_dark_name')       || 'Dark',           desc: t('template_dark_desc')       || 'Para quem quer se destacar.' },
+    { id: 'timeline',   name: 'Timeline',                                         desc: 'Linha do tempo na margem, muito legível.' },
+    { id: 'sideright',  name: 'Sidebar Direita',                                  desc: 'Conteúdo à esquerda, info de contato à direita.' },
+    { id: 'bold',       name: 'Bold',                                             desc: 'Header colorido impactante, corpo organizado.' },
+    { id: 'compact',    name: 'Compacto',                                         desc: 'Tipografia serif, máxima informação em pouco espaço.' },
   ];
 
+  const normalize = (str) =>
+    str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/gi, '').toLowerCase();
+
   const filtered = templates.filter(tpl => {
-    if (activeCat === 'fav') return favorites.includes(tpl.id);
-    return TEMPLATE_CATS[tpl.id]?.includes(activeCat);
+    const q = normalize(search.trim());
+    const matchSearch = !q || normalize(tpl.name).includes(q) || normalize(tpl.desc).includes(q);
+    const matchFav = activeCat !== 'fav' || favorites.includes(tpl.id);
+    return matchSearch && matchFav;
   });
 
   const HERO_TEXT = {
@@ -208,6 +232,65 @@ export default function SelecionarTemplate({ route, navigation }) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
+
+      {/* ── HEADER FIXO ── */}
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.secondary || '#7C3AED']}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={s.header}
+      >
+        <View style={[s.blob, { width: 180, height: 180, top: -70, right: -50, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+        <View style={[s.blob, { width: 90, height: 90, bottom: -30, left: -20, backgroundColor: 'rgba(255,255,255,0.06)' }]} />
+        <View style={s.headerRow}>
+          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} style={s.headerBackBtn}>
+            <MaterialCommunityIcons name="arrow-left" size={20} color="#fff" />
+          </TouchableOpacity>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={s.headerTitle}>{hero.title}</Text>
+            <Text style={s.headerSub}>{hero.sub}</Text>
+          </View>
+          <View style={s.headerIconBox}>
+            <MaterialCommunityIcons name="palette-swatch-outline" size={22} color={theme.colors.primary} />
+          </View>
+        </View>
+      </LinearGradient>
+
+      {/* ── BUSCA + FAVORITOS ── */}
+      <View style={[s.searchRow, { backgroundColor: theme.colors.background, borderBottomColor: theme.colors.outlineVariant }]}>
+        <View style={[s.searchBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+          <MaterialCommunityIcons name="magnify" size={18} color={theme.colors.onSurfaceVariant} />
+          <TextInput
+            style={[s.searchInput, { color: theme.colors.onSurface }]}
+            placeholder="Buscar modelo..."
+            placeholderTextColor={theme.colors.onSurfaceVariant}
+            value={search}
+            onChangeText={setSearch}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <MaterialCommunityIcons name="close-circle" size={16} color={theme.colors.onSurfaceVariant} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <TouchableOpacity
+          onPress={() => setActiveCat(activeCat === 'fav' ? 'all' : 'fav')}
+          activeOpacity={0.8}
+          style={[s.favFilterBtn, {
+            backgroundColor: activeCat === 'fav' ? '#FFF1F2' : theme.colors.surface,
+            borderColor: activeCat === 'fav' ? '#FDA4AF' : theme.colors.outlineVariant,
+          }]}
+        >
+          <MaterialCommunityIcons
+            name={activeCat === 'fav' ? 'heart' : 'heart-outline'}
+            size={20}
+            color={activeCat === 'fav' ? '#F43F5E' : theme.colors.onSurfaceVariant}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* ── LISTA ── */}
       <FlatList
         data={filtered}
         renderItem={({ item, index }) => (
@@ -226,135 +309,46 @@ export default function SelecionarTemplate({ route, navigation }) {
         numColumns={2}
         columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 16 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
-        ListHeaderComponent={() => (
-          <>
-            {/* ── HERO ── */}
-            <Animatable.View animation="fadeInDown" duration={550}>
-              <LinearGradient
-                colors={[theme.colors.primary, theme.colors.secondary || '#7C3AED']}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={s.hero}
-              >
-                {/* blobs decorativos */}
-                <View style={[s.blob, { width: 180, height: 180, top: -70, right: -50, backgroundColor: 'rgba(255,255,255,0.09)' }]} />
-                <View style={[s.blob, { width: 100, height: 100, bottom: -30, left: -20, backgroundColor: 'rgba(255,255,255,0.07)' }]} />
-
-                {/* botão voltar */}
-                <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} activeOpacity={0.8}>
-                  <MaterialCommunityIcons name="arrow-left" size={20} color="#fff" />
-                </TouchableOpacity>
-
-                {/* ícone central */}
-                <Animatable.View animation="bounceIn" duration={700} delay={200} style={s.heroIconWrap}>
-                  <MaterialCommunityIcons name="palette-swatch-outline" size={34} color="#fff" />
-                </Animatable.View>
-
-                <Text style={s.heroTitle}>{hero.title}</Text>
-                <Text style={s.heroSub}>{hero.sub}</Text>
-
-                {/* stats */}
-                <View style={s.statsRow}>
-                  <View style={s.stat}>
-                    <Text style={s.statVal}>8</Text>
-                    <Text style={s.statLabel}>{lang === 'en' ? 'Models' : 'Modelos'}</Text>
-                  </View>
-                  <View style={s.statDiv} />
-                  <View style={s.stat}>
-                    <Text style={s.statVal}>{favorites.length}</Text>
-                    <Text style={s.statLabel}>{lang === 'en' ? 'Favorites' : 'Favoritos'}</Text>
-                  </View>
-                  <View style={s.statDiv} />
-                  <View style={s.stat}>
-                    <Text style={s.statVal}>PDF</Text>
-                    <Text style={s.statLabel}>{lang === 'en' ? 'Export' : 'Export'}</Text>
-                  </View>
-                </View>
-              </LinearGradient>
-            </Animatable.View>
-
-            {/* ── Filtros ── */}
-            <Animatable.View animation="fadeInUp" duration={450} delay={150}>
-              <View style={s.catRow}>
-                {CATS.map(cat => {
-                  const active = activeCat === cat;
-                  return (
-                    <TouchableOpacity
-                      key={cat}
-                      onPress={() => setActiveCat(cat)}
-                      activeOpacity={0.8}
-                      style={{ borderRadius: 24, overflow: 'hidden' }}
-                    >
-                      {active ? (
-                        <LinearGradient
-                          colors={[theme.colors.primary, theme.colors.secondary || '#7C3AED']}
-                          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                          style={s.catActive}
-                        >
-                          {cat === 'fav' && <MaterialCommunityIcons name="heart" size={12} color="#fff" />}
-                          <Text style={s.catActiveTxt}>{CAT_LABELS[lang][cat]}</Text>
-                        </LinearGradient>
-                      ) : (
-                        <View style={[s.catInactive, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
-                          {cat === 'fav' && <MaterialCommunityIcons name="heart-outline" size={12} color="#F43F5E" />}
-                          <Text style={[s.catInactiveTxt, { color: theme.colors.onSurfaceVariant }]}>{CAT_LABELS[lang][cat]}</Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </Animatable.View>
-
-            {/* empty state */}
-            {activeCat === 'fav' && filtered.length === 0 && (
-              <Animatable.View animation="fadeIn" duration={400} style={s.empty}>
-                <MaterialCommunityIcons name="heart-outline" size={52} color={theme.colors.outlineVariant} />
-                <Text style={[s.emptyTxt, { color: theme.colors.onSurfaceVariant }]}>
-                  {lang === 'en' ? 'No favorites yet.\nTap ♡ on any template!' : lang === 'es' ? 'Sin favoritos.\n¡Toca ♡!' : 'Nenhum favorito ainda.\nToque ♡ em qualquer modelo!'}
-                </Text>
-              </Animatable.View>
-            )}
-          </>
+        contentContainerStyle={{ paddingTop: 12, paddingBottom: 120 }}
+        ListEmptyComponent={() => (
+          <Animatable.View animation="fadeIn" duration={400} style={s.empty}>
+            <MaterialCommunityIcons
+              name={activeCat === 'fav' ? 'heart-outline' : 'text-search'}
+              size={52}
+              color={theme.colors.outlineVariant}
+            />
+            <Text style={[s.emptyTxt, { color: theme.colors.onSurfaceVariant }]}>
+              {activeCat === 'fav'
+                ? 'Nenhum favorito ainda.\nToque ♡ em qualquer modelo!'
+                : `Nenhum modelo encontrado\npara "${search}"`}
+            </Text>
+          </Animatable.View>
         )}
       />
+
     </SafeAreaView>
   );
 }
 
-/* ── Estilos hero / filtros ── */
+/* ── Estilos header / filtros ── */
 const s = StyleSheet.create({
-  hero: {
-    margin: 16,
-    marginTop: 8,
-    borderRadius: 28,
-    padding: 24,
-    paddingTop: 56,
-    alignItems: 'center',
-    gap: 6,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 20,
     overflow: 'hidden',
-    elevation: 8,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
   },
-  blob:        { position: 'absolute', borderRadius: 999 },
-  backBtn:     { position: 'absolute', top: 16, left: 16, width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.22)', justifyContent: 'center', alignItems: 'center' },
-  heroIconWrap:{ width: 70, height: 70, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', marginBottom: 6, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)' },
-  heroTitle:   { color: '#fff', fontSize: 22, fontWeight: '900', textAlign: 'center', letterSpacing: 0.2 },
-  heroSub:     { color: 'rgba(255,255,255,0.78)', fontSize: 13, textAlign: 'center', lineHeight: 20 },
-  statsRow:    { flexDirection: 'row', alignItems: 'center', marginTop: 18, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 18, paddingVertical: 12, paddingHorizontal: 8, width: '100%', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
-  stat:        { flex: 1, alignItems: 'center' },
-  statVal:     { color: '#fff', fontSize: 18, fontWeight: '900' },
-  statLabel:   { color: 'rgba(255,255,255,0.72)', fontSize: 10, marginTop: 2, fontWeight: '600' },
-  statDiv:     { width: 1, height: 26, backgroundColor: 'rgba(255,255,255,0.28)' },
+  blob:          { position: 'absolute', borderRadius: 999 },
+  headerRow:     { flexDirection: 'row', alignItems: 'center' },
+  headerBackBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+  headerTitle:   { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: 0.2 },
+  headerSub:     { color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 3, fontWeight: '500' },
+  headerIconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
 
-  catRow:       { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginVertical: 12, flexWrap: 'wrap' },
-  catActive:    { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 16 },
-  catActiveTxt: { fontSize: 12, fontWeight: '800', color: '#fff' },
-  catInactive:  { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 16, borderRadius: 24, borderWidth: 1 },
-  catInactiveTxt:{ fontSize: 12, fontWeight: '600' },
+  searchRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
+  searchBox:   { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 14, borderWidth: 1 },
+  searchInput: { flex: 1, fontSize: 14, padding: 0, margin: 0 },
+  favFilterBtn:{ width: 44, height: 44, borderRadius: 14, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center' },
 
   empty:    { alignItems: 'center', paddingVertical: 48, gap: 14, paddingHorizontal: 32 },
   emptyTxt: { fontSize: 14, textAlign: 'center', lineHeight: 22 },
@@ -363,68 +357,60 @@ const s = StyleSheet.create({
 /* ── Estilos do card ── */
 const cs = StyleSheet.create({
   card: {
-    borderRadius: 20,
+    borderRadius: 22,
     overflow: 'hidden',
-    elevation: 4,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 8,
+    shadowRadius: 12,
   },
 
   /* Preview */
-  preview:  { height: 148, overflow: 'hidden', position: 'relative' },
+  preview:  { height: 158, overflow: 'hidden', position: 'relative' },
   blob:     { position: 'absolute', borderRadius: 999 },
 
   /* Papel simulado */
   paper: {
     position: 'absolute',
-    top: 14, left: 14, right: 14, bottom: -6,
+    top: 16, left: 16, right: 16, bottom: -4,
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 10,
-    paddingTop: 10,
-    elevation: 3,
+    borderRadius: 12,
+    padding: 11,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    flexDirection: 'column',
-    gap: 0,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
-  paperAvatar:  { width: 28, height: 28, borderRadius: 8, backgroundColor: '#E2E8F0', marginBottom: 6 },
-  paperLine:    { height: 6, borderRadius: 3, backgroundColor: '#E2E8F0', marginBottom: 3 },
-  paperDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 6 },
+  paperAvatar:  { width: 26, height: 26, borderRadius: 7, backgroundColor: '#E2E8F0' },
+  paperLine:    { height: 5, borderRadius: 3, backgroundColor: '#E2E8F0' },
+  paperDivider: { height: 1, backgroundColor: '#EEF2F7', marginVertical: 5 },
 
-  /* Ícone estilo */
+  /* Ícone estilo — canto inferior esquerdo */
   styleIcon: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    bottom: 10, left: 10,
+    width: 30, height: 30,
+    borderRadius: 9,
+    justifyContent: 'center', alignItems: 'center',
   },
 
-  /* Favorito */
-  favPos:    { position: 'absolute', top: 10, right: 10 },
-  favIconWrap: { width: 30, height: 30, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  /* Favorito — canto superior direito, grande e claro */
+  favPos:      { position: 'absolute', top: 8, right: 8 },
+  favIconWrap: { width: 34, height: 34, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
 
-  /* Check selecionado */
-  checkBadge: { position: 'absolute', top: 10, left: 10, width: 26, height: 26, borderRadius: 8, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff' },
+  /* Check selecionado — canto superior esquerdo */
+  checkBadge:      { position: 'absolute', top: 8, left: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 2, borderColor: '#fff' },
+  checkBadgeInner: { width: 26, height: 26, justifyContent: 'center', alignItems: 'center' },
 
   /* Info */
-  info:      { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 4, gap: 3 },
+  info:      { paddingHorizontal: 13, paddingTop: 11, paddingBottom: 5, borderTopWidth: 1 },
   accentDot: { width: 8, height: 8, borderRadius: 4 },
-  name:      { fontSize: 13, fontWeight: '800', flex: 1 },
-  desc:      { fontSize: 10.5, lineHeight: 15 },
+  name:      { fontSize: 13, fontWeight: '800' },
+  desc:      { fontSize: 10, lineHeight: 14, marginTop: 1 },
 
   /* Ações */
-  actions:   { flexDirection: 'row', gap: 7, paddingHorizontal: 10, paddingBottom: 12, paddingTop: 6 },
+  actions:    { flexDirection: 'row', gap: 7, paddingHorizontal: 10, paddingBottom: 12, paddingTop: 4 },
   btnOutline: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 9, borderRadius: 12, borderWidth: 1.5 },
-  btnPdf:    { flex: 1, borderRadius: 12, overflow: 'hidden' },
-  btnPdfGrad:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 9 },
-  btnTxt:    { fontSize: 12, fontWeight: '800' },
+  btnPdf:     { flex: 1, borderRadius: 12, overflow: 'hidden' },
+  btnPdfGrad: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 9 },
+  btnTxt:     { fontSize: 12, fontWeight: '800' },
 });

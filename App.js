@@ -1,7 +1,7 @@
 // App.js
 
 import React, { useContext } from "react"; // Removido useState e useEffect
-import { ActivityIndicator, View, StyleSheet, Platform } from "react-native";
+import { ActivityIndicator, View, StyleSheet, Platform, StatusBar } from "react-native";
 import { Provider as PaperProvider } from "react-native-paper";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 // Removido AsyncStorage daqui
@@ -12,7 +12,7 @@ import RootNavigator from "./src/navigation/RootNavigator";
 import WelcomeScreen from "./src/screens/WelcomeScreen";
 
 const AppContent = () => {
-  const { theme } = useContext(ThemeContext);
+  const { theme, isDarkTheme } = useContext(ThemeContext);
   // --- CONSUMINDO O CONTEXTO ATUALIZADO ---
   const { isLoading, isFirstLaunch, finishWelcome } = useContext(UserPreferencesContext);
   
@@ -30,6 +30,11 @@ const AppContent = () => {
   return (
     <PaperProvider theme={theme}>
       <SafeAreaProvider>
+        <StatusBar
+          translucent={false}
+          backgroundColor={theme?.colors?.background || '#F5F7FA'}
+          barStyle={isDarkTheme ? 'light-content' : 'dark-content'}
+        />
         <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       {isFirstLaunch ? (
         // Passa a função 'finishWelcome' do contexto

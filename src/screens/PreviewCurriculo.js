@@ -12,6 +12,7 @@ import { gerarPDF } from '../utils/pdfGenerator';
 import {
   templateClassic, templateCreative, templateCorporate, templateElegant,
   templateMinimalist, templateInverted, templateSplit, templateDark,
+  templateTimeline, templateSideRight, templateBold, templateCompact,
 } from '../utils/pdfTemplates';
 import { UserPreferencesContext } from '../context/UserPreferencesContext';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -35,6 +36,7 @@ const TEMPLATE_MAP = {
   classic: templateClassic, creative: templateCreative, corporate: templateCorporate,
   elegant: templateElegant, minimalist: templateMinimalist, inverted: templateInverted,
   split: templateSplit, dark: templateDark,
+  timeline: templateTimeline, sideright: templateSideRight, bold: templateBold, compact: templateCompact,
 };
 
 /* ── spinner de loading animado ── */

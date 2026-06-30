@@ -1,13 +1,16 @@
 import React, { useState, useCallback, useContext, useRef, useEffect } from 'react';
 import {
   StyleSheet, View, Alert, FlatList, TouchableOpacity,
-  Dimensions, Animated, Easing,
+  Dimensions, Animated, Easing, Modal, Pressable,
 } from 'react-native';
 import { Text, useTheme, Snackbar } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { UserPreferencesContext } from '../context/UserPreferencesContext';
 import { curriculosExemplo } from '../utils/exemplosCurriculos';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -99,7 +102,8 @@ export default function ListaCurriculos({ navigation, route }) {
   const { t } = useContext(UserPreferencesContext);
 
   const [curriculos, setCurriculos]    = useState([]);
-  const [snackbarVisible, setSnackbar] = useState(false);
+  const [snackbarMsg, setSnackbar]     = useState(null);
+  const [deleteModal, setDeleteModal]  = useState(null); // { index, nome, importado }
 
   useFocusEffect(useCallback(() => { carregar(); }, []));
 
@@ -113,19 +117,103 @@ export default function ListaCurriculos({ navigation, route }) {
     carregar();
   };
 
+  const importarCurriculo = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'application/msword',
+               'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+
+      const file = result.assets[0];
+      const destDir  = FileSystem.documentDirectory + 'curriculos_importados/';
+      const destPath = destDir + file.name;
+
+      await FileSystem.makeDirectoryAsync(destDir, { intermediates: true });
+      await FileSystem.copyAsync({ from: file.uri, to: destPath });
+
+      const novo = {
+        _importado: true,
+        nomeInterno: file.name.replace(/\.[^.]+$/, ''),
+        arquivoUri: destPath,
+        arquivoNome: file.name,
+        arquivoMime: file.mimeType || 'application/pdf',
+        lastUpdated: new Date().toISOString(),
+      };
+
+      const novos = [novo, ...curriculos];
+      setCurriculos(novos);
+      await AsyncStorage.setItem('curriculos', JSON.stringify(novos));
+      setSnackbar('importado');
+
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível importar o arquivo.');
+    }
+  };
+
+  const visualizarCurriculo = async (cur) => {
+    try {
+      const info = await FileSystem.getInfoAsync(cur.arquivoUri);
+      if (!info.exists) {
+        Alert.alert('Arquivo não encontrado', 'O arquivo pode ter sido removido do dispositivo.');
+        return;
+      }
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert('Visualização indisponível', 'Seu dispositivo não suporta esta função.');
+        return;
+      }
+      await Sharing.shareAsync(cur.arquivoUri, {
+        mimeType: cur.arquivoMime || 'application/pdf',
+        dialogTitle: `Abrir ${cur.arquivoNome}`,
+        UTI: 'com.adobe.pdf',
+      });
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível abrir o arquivo.');
+    }
+  };
+
+  const enviarCurriculo = async (cur) => {
+    try {
+      const info = await FileSystem.getInfoAsync(cur.arquivoUri);
+      if (!info.exists) {
+        Alert.alert('Arquivo não encontrado', 'O arquivo pode ter sido removido do dispositivo.');
+        return;
+      }
+      const canShare = await Sharing.isAvailableAsync();
+      if (!canShare) {
+        Alert.alert('Compartilhamento indisponível', 'Seu dispositivo não suporta esta função.');
+        return;
+      }
+      await Sharing.shareAsync(cur.arquivoUri, {
+        mimeType: cur.arquivoMime || 'application/pdf',
+        dialogTitle: `Enviar ${cur.arquivoNome}`,
+        UTI: 'com.adobe.pdf',
+      });
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível compartilhar o arquivo.');
+    }
+  };
+
   const excluir = (index) => {
-    Alert.alert(t('deleteResumeTitle'), t('deleteResumeConfirm'), [
-      { text: t('cancel'), style: 'cancel' },
-      {
-        text: t('delete'), style: 'destructive',
-        onPress: async () => {
-          const novos = curriculos.filter((_, i) => i !== index);
-          setCurriculos(novos);
-          await AsyncStorage.setItem('curriculos', JSON.stringify(novos));
-          setSnackbar(true);
-        },
-      },
-    ]);
+    const cur = curriculos[index];
+    setDeleteModal({
+      index,
+      nome: cur.nomeInterno || `Currículo ${index + 1}`,
+      importado: !!cur._importado,
+      ext: cur._importado ? (cur.arquivoNome || '').split('.').pop().toUpperCase() : null,
+    });
+  };
+
+  const confirmarExclusao = async () => {
+    const { index } = deleteModal;
+    const novos = curriculos.filter((_, i) => i !== index);
+    setCurriculos(novos);
+    await AsyncStorage.setItem('curriculos', JSON.stringify(novos));
+    setDeleteModal(null);
+    setSnackbar('deletado');
   };
 
   const fmtDate = (ds) => {
@@ -156,13 +244,22 @@ export default function ListaCurriculos({ navigation, route }) {
               : `${curriculos.length} ${curriculos.length === 1 ? 'currículo' : 'currículos'}`}
           </Text>
         </View>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('CriarCurrículo')}
-          activeOpacity={0.85}
-          style={s.headerAddBtn}
-        >
-          <MaterialCommunityIcons name="plus" size={22} color={theme.colors.primary} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity
+            onPress={importarCurriculo}
+            activeOpacity={0.85}
+            style={[s.headerAddBtn, { backgroundColor: 'rgba(255,255,255,0.22)', width: 44, height: 44 }]}
+          >
+            <MaterialCommunityIcons name="file-import-outline" size={20} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CriarCurrículo')}
+            activeOpacity={0.85}
+            style={s.headerAddBtn}
+          >
+            <MaterialCommunityIcons name="plus" size={22} color={theme.colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
     </LinearGradient>
   );
@@ -210,12 +307,21 @@ export default function ListaCurriculos({ navigation, route }) {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={carregarExemplos}
-                activeOpacity={0.8}
+                onPress={importarCurriculo}
+                activeOpacity={0.85}
                 style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 28, borderWidth: 1.5, borderColor: c + '55', backgroundColor: c + '0D' }}
               >
-                <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={c} />
-                <Text style={{ color: c, fontWeight: '700', fontSize: 14 }}>Carregar exemplos</Text>
+                <MaterialCommunityIcons name="file-import-outline" size={18} color={c} />
+                <Text style={{ color: c, fontWeight: '700', fontSize: 14 }}>Importar meu currículo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={carregarExemplos}
+                activeOpacity={0.8}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, borderRadius: 28 }}
+              >
+                <MaterialCommunityIcons name="lightbulb-on-outline" size={16} color={theme.colors.onSurfaceVariant} />
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontWeight: '600', fontSize: 13 }}>Carregar exemplos</Text>
               </TouchableOpacity>
             </Animatable.View>
 
@@ -229,8 +335,8 @@ export default function ListaCurriculos({ navigation, route }) {
             </Animatable.View>
           </View>
         </View>
-        <Snackbar visible={snackbarVisible} onDismiss={() => setSnackbar(false)} duration={2000}>
-          {t('deleteSuccess')}
+        <Snackbar visible={!!snackbarMsg} onDismiss={() => setSnackbar(null)} duration={2500}>
+          {snackbarMsg === 'importado' ? 'Currículo importado com sucesso!' : t('deleteSuccess')}
         </Snackbar>
       </SafeAreaView>
     );
@@ -239,19 +345,79 @@ export default function ListaCurriculos({ navigation, route }) {
   /* ── CARD ── */
   const renderItem = ({ item: cur, index }) => {
     const [c1, c2] = CARD_COLORS[index % CARD_COLORS.length];
-    const initials  = getInitials(cur.nomeInterno || `C${index + 1}`);
-    const nome      = cur.nomeInterno || `Currículo ${index + 1}`;
-    const profissao = cur.dadosPessoais?.nome || '';
+    const initials   = getInitials(cur.nomeInterno || `C${index + 1}`);
+    const nome       = cur.nomeInterno || `Currículo ${index + 1}`;
+    const profissao  = cur.dadosPessoais?.nome || '';
     const completude = calcCompletude(cur);
+    const importado  = !!cur._importado;
 
+    const ext = importado
+      ? (cur.arquivoNome || '').split('.').pop().toUpperCase()
+      : null;
+
+    /* ── Card currículo IMPORTADO ── */
+    if (importado) {
+      const extIcon = ext === 'PDF' ? 'file-pdf-box' : 'file-word-box';
+      const extColor = ext === 'PDF' ? '#E53E3E' : '#2B6CB0';
+      return (
+        <Animatable.View animation="fadeInUp" duration={500} delay={index * 60}>
+          <View style={[s.importCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline + '60' }]}>
+            {/* linha superior: ícone + info + deletar */}
+            <View style={s.importCardTop}>
+              <View style={[s.importIconBox, { backgroundColor: extColor + '15' }]}>
+                <MaterialCommunityIcons name={extIcon} size={32} color={extColor} />
+                <Text style={[s.importExtLabel, { color: extColor }]}>{ext || 'DOC'}</Text>
+              </View>
+
+              <View style={{ flex: 1, marginLeft: 14 }}>
+                <Text style={[s.cardName, { color: theme.colors.onSurface }]} numberOfLines={2}>{nome}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 5 }}>
+                  <View style={[s.importedTagBadge, { backgroundColor: c1 + '18', borderColor: c1 + '40' }]}>
+                    <MaterialCommunityIcons name="upload-outline" size={10} color={c1} />
+                    <Text style={[s.importedTagText, { color: c1 }]}>Importado</Text>
+                  </View>
+                  <Text style={[s.cardDate, { color: theme.colors.onSurfaceVariant }]}>{fmtDate(cur.lastUpdated)}</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                onPress={() => excluir(index)}
+                style={[s.deleteBtn, { backgroundColor: theme.colors.errorContainer || '#FFEBEE' }]}
+              >
+                <MaterialCommunityIcons name="delete-outline" size={17} color={theme.colors.error} />
+              </TouchableOpacity>
+            </View>
+
+            {/* divisor */}
+            <View style={[s.importDivider, { backgroundColor: theme.colors.outlineVariant }]} />
+
+            {/* botão Enviar / Abrir */}
+            <TouchableOpacity
+              onPress={() => enviarCurriculo(cur)}
+              activeOpacity={0.85}
+              style={{ borderRadius: 14, overflow: 'hidden' }}
+            >
+              <LinearGradient
+                colors={[c1, c2]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 13 }}
+              >
+                <MaterialCommunityIcons name="share-variant-outline" size={16} color="#fff" />
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Abrir / Enviar currículo</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </Animatable.View>
+      );
+    }
+
+    /* ── Card currículo CRIADO NO APP ── */
     return (
       <Animatable.View animation="fadeInUp" duration={500} delay={index * 60}>
         <View style={[s.card, { backgroundColor: theme.colors.surface, borderColor: c1 + '28' }]}>
-          {/* faixa lateral */}
           <LinearGradient colors={[c1, c2]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={s.cardStripe} />
 
           <View style={s.cardBody}>
-            {/* topo */}
             <View style={s.cardTop}>
               {cur.fotoBase64 ? (
                 <View style={[s.avatar, { borderColor: c1 }]}>
@@ -268,9 +434,7 @@ export default function ListaCurriculos({ navigation, route }) {
                 {profissao ? <Text style={[s.cardSub, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>{profissao}</Text> : null}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
                   <MaterialCommunityIcons name="clock-outline" size={11} color={theme.colors.onSurfaceVariant} />
-                  <Text style={[s.cardDate, { color: theme.colors.onSurfaceVariant }]}>
-                    {fmtDate(cur.lastUpdated)}
-                  </Text>
+                  <Text style={[s.cardDate, { color: theme.colors.onSurfaceVariant }]}>{fmtDate(cur.lastUpdated)}</Text>
                 </View>
               </View>
 
@@ -282,7 +446,6 @@ export default function ListaCurriculos({ navigation, route }) {
               </TouchableOpacity>
             </View>
 
-            {/* barra de completude */}
             <View style={s.progressRow}>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -299,7 +462,6 @@ export default function ListaCurriculos({ navigation, route }) {
               </View>
             </View>
 
-            {/* botões */}
             <View style={[s.cardActions, { borderTopColor: theme.colors.outlineVariant }]}>
               <TouchableOpacity
                 style={[s.actionBtn, { borderColor: c1 + '44', backgroundColor: c1 + '0D' }]}
@@ -342,8 +504,68 @@ export default function ListaCurriculos({ navigation, route }) {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
       />
-      <Snackbar visible={snackbarVisible} onDismiss={() => setSnackbar(false)} duration={2500}>
-        {t('deleteSuccess')}
+
+      {/* ── Modal de exclusão ── */}
+      <Modal
+        visible={!!deleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setDeleteModal(null)}
+      >
+        <Pressable style={s.modalOverlay} onPress={() => setDeleteModal(null)}>
+          <Pressable style={[s.modalBox, { backgroundColor: theme.colors.surface }]} onPress={() => {}}>
+
+            {/* ícone */}
+            <View style={[s.modalIconWrap, { backgroundColor: theme.colors.errorContainer || '#FFEBEE' }]}>
+              <MaterialCommunityIcons name="delete-forever-outline" size={32} color={theme.colors.error} />
+            </View>
+
+            <Text style={[s.modalTitle, { color: theme.colors.onSurface }]}>Excluir currículo?</Text>
+
+            {/* nome do arquivo em destaque */}
+            <View style={[s.modalFileBox, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline + '40' }]}>
+              <MaterialCommunityIcons
+                name={deleteModal?.importado ? (deleteModal?.ext === 'PDF' ? 'file-pdf-box' : 'file-word-box') : 'file-document-outline'}
+                size={20}
+                color={deleteModal?.importado && deleteModal?.ext === 'PDF' ? '#E53E3E' : theme.colors.primary}
+              />
+              <Text style={[s.modalFileName, { color: theme.colors.onSurface }]} numberOfLines={2}>
+                {deleteModal?.nome}
+              </Text>
+            </View>
+
+            <Text style={[s.modalDesc, { color: theme.colors.onSurfaceVariant }]}>
+              {deleteModal?.importado
+                ? 'O arquivo original no seu celular não será apagado.'
+                : 'Esta ação não pode ser desfeita.'}
+            </Text>
+
+            {/* botões */}
+            <View style={s.modalBtns}>
+              <TouchableOpacity
+                onPress={() => setDeleteModal(null)}
+                activeOpacity={0.8}
+                style={[s.modalBtnCancel, { borderColor: theme.colors.outline + '60', backgroundColor: theme.colors.surfaceVariant }]}
+              >
+                <Text style={[s.modalBtnCancelText, { color: theme.colors.onSurfaceVariant }]}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={confirmarExclusao}
+                activeOpacity={0.85}
+                style={[s.modalBtnDelete, { backgroundColor: theme.colors.error }]}
+              >
+                <MaterialCommunityIcons name="delete-outline" size={16} color="#fff" />
+                <Text style={s.modalBtnDeleteText}>Excluir</Text>
+              </TouchableOpacity>
+            </View>
+
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Snackbar visible={!!snackbarMsg} onDismiss={() => setSnackbar(null)} duration={2500}>
+        {snackbarMsg === 'importado' ? 'Currículo importado com sucesso!' : t('deleteSuccess')}
       </Snackbar>
     </SafeAreaView>
   );
@@ -417,6 +639,38 @@ const s = StyleSheet.create({
   progressTrack:{ height: 5, borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: 5, borderRadius: 3 },
   progressLabel:{ fontSize: 11, fontWeight: '800' },
+
+  /* CARD IMPORTADO */
+  importCard: {
+    borderRadius: 20, borderWidth: 1.5,
+    overflow: 'hidden', padding: 16,
+    elevation: 3,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8,
+  },
+  importCardTop:    { flexDirection: 'row', alignItems: 'center' },
+  importIconBox:    { width: 56, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  importExtLabel:   { fontSize: 9, fontWeight: '900', letterSpacing: 1, marginTop: 1 },
+  importedTagBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
+  importedTagText:  { fontSize: 10, fontWeight: '700' },
+  importDivider:    { height: 1, marginVertical: 14 },
+  importCardActions:{ flexDirection: 'row', gap: 10 },
+  importBtnOutline: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 11, borderRadius: 14, borderWidth: 1.5 },
+  importBtnFilled:  { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 11 },
+  importBtnText:    { fontWeight: '700', fontSize: 13 },
+
+  /* MODAL EXCLUSÃO */
+  modalOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalBox:           { width: '100%', borderRadius: 28, padding: 28, alignItems: 'center', elevation: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.25, shadowRadius: 20 },
+  modalIconWrap:      { width: 72, height: 72, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+  modalTitle:         { fontSize: 20, fontWeight: '900', marginBottom: 16, textAlign: 'center' },
+  modalFileBox:       { flexDirection: 'row', alignItems: 'center', gap: 10, width: '100%', borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 12 },
+  modalFileName:      { flex: 1, fontSize: 14, fontWeight: '700' },
+  modalDesc:          { fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  modalBtns:          { flexDirection: 'row', gap: 12, width: '100%' },
+  modalBtnCancel:     { flex: 1, paddingVertical: 14, borderRadius: 16, borderWidth: 1.5, alignItems: 'center' },
+  modalBtnCancelText: { fontWeight: '700', fontSize: 14 },
+  modalBtnDelete:     { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 14, borderRadius: 16 },
+  modalBtnDeleteText: { color: '#fff', fontWeight: '800', fontSize: 14 },
 
   cardActions:     { flexDirection: 'row', gap: 10, marginTop: 14, paddingTop: 14, borderTopWidth: 1 },
   actionBtn:       { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 14, borderWidth: 1.5 },

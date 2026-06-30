@@ -808,3 +808,426 @@ ${curriculo.idiomas.map(i => `
 </div>`).join('')}` : ''}
 
 </body></html>`;
+
+
+// ==================================================
+// 9. TEMPLATE TIMELINE (ID: 'timeline')
+// ==================================================
+export const templateTimeline = (curriculo, corPrimaria = '#0F766E', t) => `
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+${BASE_CSS}
+@page { margin: 14mm 16mm; }
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e293b; font-size: 10pt; background: #fff; line-height: 1.5; padding: 36px 44px; }
+@media print { body { padding: 0 !important; } }
+.header { display: flex; align-items: center; gap: 24px; padding-bottom: 20px; border-bottom: 3px solid ${corPrimaria}; margin-bottom: 24px; }
+.photo { width: 82px; height: 82px; border-radius: 14px; object-fit: cover; border: 2px solid ${corPrimaria}22; flex-shrink: 0; }
+.header-info h1 { font-size: 22pt; font-weight: 800; color: ${corPrimaria}; margin-bottom: 4px; letter-spacing: -0.5px; }
+.contacts { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 8.5pt; color: #64748b; margin-top: 6px; }
+.section-title { font-size: 11pt; font-weight: 800; color: ${corPrimaria}; text-transform: uppercase; letter-spacing: 1.2px; margin: 22px 0 14px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: ${corPrimaria}33; }
+.summary { font-size: 10pt; color: #475569; line-height: 1.7; text-align: justify; }
+.tl-wrap { position: relative; padding-left: 28px; }
+.tl-wrap::before { content: ''; position: absolute; left: 7px; top: 6px; bottom: 0; width: 2px; background: ${corPrimaria}33; }
+.tl-item { position: relative; margin-bottom: 18px; page-break-inside: avoid; }
+.tl-dot { position: absolute; left: -28px; top: 5px; width: 14px; height: 14px; border-radius: 50%; background: ${corPrimaria}; border: 3px solid #fff; box-shadow: 0 0 0 2px ${corPrimaria}55; }
+.tl-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px; }
+.tl-title { font-weight: 700; font-size: 11pt; color: #0f172a; }
+.tl-period { font-size: 8.5pt; color: #94a3b8; font-style: italic; white-space: nowrap; margin-left: 8px; }
+.tl-sub { font-size: 9.5pt; color: ${corPrimaria}; font-weight: 600; margin-bottom: 4px; }
+.tl-desc { font-size: 9.5pt; color: #475569; line-height: 1.5; }
+.edu-item { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0; page-break-inside: avoid; }
+.edu-left .edu-course { font-weight: 700; font-size: 10.5pt; color: #0f172a; }
+.edu-left .edu-inst { font-size: 9pt; color: #64748b; }
+.edu-right { font-size: 8.5pt; color: #94a3b8; white-space: nowrap; margin-left: 8px; }
+.cert-item { font-size: 9.5pt; color: #334155; margin-bottom: 6px; }
+.skills-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
+.skill-chip { background: ${corPrimaria}; color: #fff; border-radius: 20px; padding: 5px 14px; font-size: 8.5pt; font-weight: 700; letter-spacing: 0.2px; }
+.skill-chip-soft { background: #fff; color: ${corPrimaria}; border: 1.5px solid ${corPrimaria}; border-radius: 20px; padding: 5px 14px; font-size: 8.5pt; font-weight: 700; }
+.lang-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+.lang-table tr { border-bottom: 1px solid #f1f5f9; }
+.lang-table tr:last-child { border-bottom: none; }
+.lang-td-name { padding: 6px 0; font-weight: 700; font-size: 10pt; color: #0f172a; width: 40%; }
+.lang-td-bar { padding: 6px 12px; width: 40%; }
+.lang-bar-bg { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+.lang-bar-fill { height: 6px; background: linear-gradient(to right, ${corPrimaria}, ${corPrimaria}99); border-radius: 3px; }
+.lang-td-level { padding: 6px 0; font-size: 8.5pt; color: ${corPrimaria}; font-weight: 700; text-align: right; width: 20%; white-space: nowrap; }
+</style></head><body>
+
+<div class="header">
+  ${curriculo.fotoBase64 ? `<img src="${curriculo.fotoBase64}" class="photo">` : ''}
+  <div class="header-info">
+    <h1>${curriculo.dadosPessoais?.nome || 'Seu Nome Completo'}</h1>
+    <div class="contacts">
+      ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone,
+         curriculo.dadosPessoais?.cidade ? curriculo.dadosPessoais.cidade + (curriculo.dadosPessoais?.estado ? '/' + curriculo.dadosPessoais.estado : '') : null,
+         curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site]
+        .filter(Boolean).map(c => `<span>${c}</span>`).join('')}
+    </div>
+  </div>
+</div>
+
+${curriculo.resumoProfissional ? `<div class="section-title">Resumo</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
+${curriculo.objetivoProfissional ? `<div class="section-title">Objetivo</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
+
+${curriculo.experiencias?.length ? `
+<div class="section-title">Experiência</div>
+<div class="tl-wrap">
+${curriculo.experiencias.map(exp => `
+<div class="tl-item">
+  <div class="tl-dot"></div>
+  <div class="tl-header">
+    <div class="tl-title">${exp.cargo || ''}</div>
+    <div class="tl-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+  </div>
+  <div class="tl-sub">${exp.empresa || ''}</div>
+  ${exp.atividades ? `<div class="tl-desc">${exp.atividades}</div>` : ''}
+</div>`).join('')}
+</div>` : ''}
+
+${curriculo.formacao?.length ? `
+<div class="section-title">Formação</div>
+${curriculo.formacao.map(f => `
+<div class="edu-item">
+  <div class="edu-left">
+    <div class="edu-course">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
+    <div class="edu-inst">${f.instituicao || ''}</div>
+  </div>
+  ${f.anoConclusao ? `<div class="edu-right">${formatDate(f.anoConclusao)}</div>` : ''}
+</div>`).join('')}` : ''}
+
+${curriculo.certificacoes?.length ? `
+<div class="section-title">Certificações</div>
+${curriculo.certificacoes.map(c => `<div class="cert-item"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` · ${formatDate(c.anoConclusao)}` : ''}</div>`).join('')}` : ''}
+
+${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
+<div class="section-title">Habilidades</div>
+<div class="skills-grid">
+  ${(curriculo.hardSkills || []).map(h => `<span class="skill-chip">${h.habilidade}</span>`).join('')}
+  ${(curriculo.softSkills || []).map(h => `<span class="skill-chip-soft">${h.habilidade}</span>`).join('')}
+</div>` : ''}
+
+${curriculo.idiomas?.length ? `
+<div class="section-title">Idiomas</div>
+<table class="lang-table">
+${curriculo.idiomas.map(i => {
+  const nivelMap = { basico: 25, elementar: 40, intermediario: 55, intermediario_avancado: 70, avancado: 85, fluente: 95, nativo: 100 };
+  const pct = nivelMap[i.nivel] || 60;
+  const label = t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel;
+  return `<tr>
+  <td class="lang-td-name">${i.idioma}</td>
+  <td class="lang-td-bar"><div class="lang-bar-bg"><div class="lang-bar-fill" style="width:${pct}%"></div></div></td>
+  <td class="lang-td-level">${label}</td>
+</tr>`;
+}).join('')}
+</table>` : ''}
+
+</body></html>`;
+
+
+// ==================================================
+// 10. TEMPLATE SIDEBAR DIREITA (ID: 'sideright')
+// ==================================================
+export const templateSideRight = (curriculo, corPrimaria = '#1D4ED8', t) => `
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+${BASE_CSS}
+@page { margin: 0; }
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e293b; font-size: 10pt; background: #fff; display: flex; flex-direction: row; min-height: 100vh; }
+.main { flex: 1; padding: 40px 36px 40px 40px; }
+.name { font-size: 26pt; font-weight: 900; color: ${corPrimaria}; line-height: 1.1; margin-bottom: 4px; letter-spacing: -1px; }
+.role-line { font-size: 10.5pt; color: #64748b; margin-bottom: 18px; font-weight: 500; }
+.section-title { font-size: 10pt; font-weight: 800; color: ${corPrimaria}; text-transform: uppercase; letter-spacing: 1.5px; margin: 20px 0 10px; padding-bottom: 4px; border-bottom: 2px solid ${corPrimaria}; display: inline-block; }
+.summary { font-size: 10pt; color: #475569; line-height: 1.7; text-align: justify; }
+.job { margin-bottom: 16px; page-break-inside: avoid; }
+.job-row { display: flex; justify-content: space-between; align-items: baseline; }
+.job-title { font-weight: 700; font-size: 11pt; color: #0f172a; }
+.job-period { font-size: 8.5pt; color: #94a3b8; white-space: nowrap; margin-left: 6px; }
+.job-company { font-size: 9.5pt; color: ${corPrimaria}; font-weight: 600; margin: 2px 0 4px; }
+.job-desc { font-size: 9.5pt; color: #475569; line-height: 1.5; }
+.edu-row { display: flex; justify-content: space-between; margin-bottom: 10px; page-break-inside: avoid; }
+.edu-course { font-weight: 700; font-size: 10.5pt; }
+.edu-inst { font-size: 9pt; color: #64748b; }
+.edu-year { font-size: 8.5pt; color: #94a3b8; white-space: nowrap; margin-left: 6px; }
+.cert-line { font-size: 9.5pt; margin-bottom: 6px; }
+.sidebar { width: 30%; background: ${corPrimaria}; padding: 40px 22px; display: flex; flex-direction: column; }
+.photo-wrap { width: 90px; height: 90px; border-radius: 50%; overflow: hidden; background: rgba(255,255,255,0.15); border: 3px solid rgba(255,255,255,0.7); margin: 0 auto 24px; flex-shrink: 0; }
+.photo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.s-title { font-size: 9pt; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.25); margin-top: 22px; }
+.s-title:first-of-type { margin-top: 0; }
+.contact-line { font-size: 8.5pt; color: rgba(255,255,255,0.85); margin-bottom: 7px; line-height: 1.4; word-break: break-all; }
+.s-chip { background: rgba(255,255,255,0.15); border-radius: 14px; padding: 3px 10px; font-size: 8pt; color: rgba(255,255,255,0.9); margin-bottom: 5px; display: inline-block; margin-right: 4px; }
+.lang-line { display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 8.5pt; color: rgba(255,255,255,0.85); }
+.lang-lv { color: rgba(255,255,255,0.6); font-style: italic; }
+</style></head><body>
+
+<div class="main">
+  <div class="name">${curriculo.dadosPessoais?.nome || 'Seu Nome Completo'}</div>
+
+  ${curriculo.resumoProfissional ? `<div class="section-title">Resumo</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
+  ${curriculo.objetivoProfissional ? `<div class="section-title">Objetivo</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
+
+  ${curriculo.experiencias?.length ? `
+  <div class="section-title">Experiência</div>
+  ${curriculo.experiencias.map(exp => `
+  <div class="job">
+    <div class="job-row">
+      <div class="job-title">${exp.cargo || ''}</div>
+      <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+    </div>
+    <div class="job-company">${exp.empresa || ''}</div>
+    ${exp.atividades ? `<div class="job-desc">${exp.atividades}</div>` : ''}
+  </div>`).join('')}` : ''}
+
+  ${curriculo.formacao?.length ? `
+  <div class="section-title">Formação</div>
+  ${curriculo.formacao.map(f => `
+  <div class="edu-row">
+    <div>
+      <div class="edu-course">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
+      <div class="edu-inst">${f.instituicao || ''}</div>
+    </div>
+    ${f.anoConclusao ? `<div class="edu-year">${formatDate(f.anoConclusao)}</div>` : ''}
+  </div>`).join('')}` : ''}
+
+  ${curriculo.certificacoes?.length ? `
+  <div class="section-title">Certificações</div>
+  ${curriculo.certificacoes.map(c => `<div class="cert-line"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao)})` : ''}</div>`).join('')}` : ''}
+</div>
+
+<div class="sidebar">
+  ${curriculo.fotoBase64 ? `<div class="photo-wrap"><img src="${curriculo.fotoBase64}"></div>` : ''}
+  <div class="s-title">Contato</div>
+  ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone,
+     curriculo.dadosPessoais?.cidade ? curriculo.dadosPessoais.cidade + (curriculo.dadosPessoais?.estado ? '/' + curriculo.dadosPessoais.estado : '') : null,
+     curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site]
+    .filter(Boolean).map(c => `<div class="contact-line">${c}</div>`).join('')}
+
+  ${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
+  <div class="s-title">Habilidades</div>
+  ${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => `<span class="s-chip">${h.habilidade}</span>`).join('')}` : ''}
+
+  ${curriculo.idiomas?.length ? `
+  <div class="s-title">Idiomas</div>
+  ${curriculo.idiomas.map(i => `
+  <div class="lang-line">
+    <span>${i.idioma}</span>
+    <span class="lang-lv">${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span>
+  </div>`).join('')}` : ''}
+</div>
+
+</body></html>`;
+
+
+// ==================================================
+// 11. TEMPLATE BOLD (ID: 'bold')
+// Header colorido com nome grande, corpo limpo em duas colunas
+// ==================================================
+export const templateBold = (curriculo, corPrimaria = '#7C3AED', t) => `
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+${BASE_CSS}
+@page { margin: 0; }
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e293b; font-size: 10pt; background: #fff; line-height: 1.5; }
+.header { background: ${corPrimaria}; padding: 36px 44px 28px; position: relative; overflow: hidden; }
+.header::before { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,0.07); }
+.header::after { content: ''; position: absolute; right: 60px; bottom: -40px; width: 120px; height: 120px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+.header-inner { display: flex; align-items: center; gap: 28px; position: relative; z-index: 1; }
+.photo { width: 90px; height: 90px; border-radius: 18px; object-fit: cover; border: 3px solid rgba(255,255,255,0.6); flex-shrink: 0; }
+.name { font-size: 28pt; font-weight: 900; color: #fff; line-height: 1; margin-bottom: 6px; letter-spacing: -1px; }
+.header-contacts { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 10px; }
+.header-contacts span { font-size: 8.5pt; color: rgba(255,255,255,0.82); }
+.accent-bar { height: 5px; background: linear-gradient(to right, rgba(255,255,255,0.8), rgba(255,255,255,0.1)); }
+.body { padding: 32px 44px 44px; }
+.section-title { font-size: 12pt; font-weight: 900; color: ${corPrimaria}; text-transform: uppercase; letter-spacing: 1.5px; margin: 24px 0 12px; display: flex; align-items: center; gap: 10px; }
+.section-title::before { content: ''; width: 4px; height: 18px; background: ${corPrimaria}; border-radius: 2px; }
+.summary { font-size: 10.5pt; color: #475569; line-height: 1.7; text-align: justify; }
+.job { margin-bottom: 16px; padding-left: 16px; border-left: 2px solid ${corPrimaria}33; page-break-inside: avoid; }
+.job-row { display: flex; justify-content: space-between; align-items: baseline; }
+.job-title { font-weight: 800; font-size: 11pt; color: #0f172a; }
+.job-period { font-size: 8.5pt; color: #94a3b8; white-space: nowrap; margin-left: 6px; font-style: italic; }
+.job-company { font-size: 9.5pt; color: ${corPrimaria}; font-weight: 700; margin: 2px 0 4px; }
+.job-desc { font-size: 9.5pt; color: #475569; line-height: 1.5; }
+.two-col { display: flex; gap: 32px; }
+.col { flex: 1; }
+.edu-item { margin-bottom: 12px; page-break-inside: avoid; }
+.edu-course { font-weight: 700; font-size: 10.5pt; color: #0f172a; }
+.edu-inst { font-size: 9pt; color: #64748b; }
+.edu-year { font-size: 8.5pt; color: #94a3b8; }
+.cert-item { font-size: 9.5pt; margin-bottom: 7px; }
+.skills-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+.skill-tag { background: ${corPrimaria}15; color: ${corPrimaria}; border: 1px solid ${corPrimaria}30; border-radius: 6px; padding: 4px 10px; font-size: 8.5pt; font-weight: 600; }
+.lang-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #f1f5f9; font-size: 9.5pt; }
+.lang-lv { color: ${corPrimaria}; font-weight: 600; }
+</style></head><body>
+
+<div class="header">
+  <div class="header-inner">
+    ${curriculo.fotoBase64 ? `<img src="${curriculo.fotoBase64}" class="photo">` : ''}
+    <div>
+      <div class="name">${curriculo.dadosPessoais?.nome || 'Seu Nome Completo'}</div>
+      <div class="header-contacts">
+        ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone,
+           curriculo.dadosPessoais?.cidade ? curriculo.dadosPessoais.cidade + (curriculo.dadosPessoais?.estado ? '/' + curriculo.dadosPessoais.estado : '') : null,
+           curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site]
+          .filter(Boolean).map(c => `<span>${c}</span>`).join('')}
+      </div>
+    </div>
+  </div>
+</div>
+<div class="accent-bar"></div>
+
+<div class="body">
+  ${curriculo.resumoProfissional ? `<div class="section-title">Resumo</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
+  ${curriculo.objetivoProfissional ? `<div class="section-title">Objetivo</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
+
+  ${curriculo.experiencias?.length ? `
+  <div class="section-title">Experiência</div>
+  ${curriculo.experiencias.map(exp => `
+  <div class="job">
+    <div class="job-row">
+      <div class="job-title">${exp.cargo || ''}</div>
+      <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+    </div>
+    <div class="job-company">${exp.empresa || ''}</div>
+    ${exp.atividades ? `<div class="job-desc">${exp.atividades}</div>` : ''}
+  </div>`).join('')}` : ''}
+
+  <div class="two-col">
+    ${curriculo.formacao?.length ? `
+    <div class="col">
+      <div class="section-title">Formação</div>
+      ${curriculo.formacao.map(f => `
+      <div class="edu-item">
+        <div class="edu-course">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
+        <div class="edu-inst">${f.instituicao || ''}</div>
+        ${f.anoConclusao ? `<div class="edu-year">${formatDate(f.anoConclusao)}</div>` : ''}
+      </div>`).join('')}
+    </div>` : ''}
+    ${(curriculo.hardSkills?.length || curriculo.softSkills?.length || curriculo.idiomas?.length) ? `
+    <div class="col">
+      ${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
+      <div class="section-title">Habilidades</div>
+      <div class="skills-wrap">
+        ${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => `<span class="skill-tag">${h.habilidade}</span>`).join('')}
+      </div>` : ''}
+      ${curriculo.idiomas?.length ? `
+      <div class="section-title">Idiomas</div>
+      ${curriculo.idiomas.map(i => `
+      <div class="lang-row">
+        <b>${i.idioma}</b>
+        <span class="lang-lv">${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span>
+      </div>`).join('')}` : ''}
+    </div>` : ''}
+  </div>
+
+  ${curriculo.certificacoes?.length ? `
+  <div class="section-title">Certificações</div>
+  ${curriculo.certificacoes.map(c => `<div class="cert-item"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao)})` : ''}</div>`).join('')}` : ''}
+</div>
+
+</body></html>`;
+
+
+// ==================================================
+// 12. TEMPLATE COMPACT (ID: 'compact')
+// Tipografia serif, máxima densidade, sem cores de fundo
+// ==================================================
+export const templateCompact = (curriculo, corPrimaria = '#0369A1', t) => `
+<!DOCTYPE html><html><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+${BASE_CSS}
+@page { margin: 12mm 14mm; }
+body { font-family: Georgia, 'Times New Roman', serif; color: #111; font-size: 10pt; background: #fff; line-height: 1.45; padding: 32px 40px; }
+@media print { body { padding: 0 !important; } }
+.header { text-align: center; margin-bottom: 14px; }
+.photo { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 1.5px solid #ccc; margin-bottom: 8px; }
+.name { font-size: 22pt; font-weight: 700; color: #111; letter-spacing: -0.5px; margin-bottom: 4px; }
+.contacts { font-size: 8.5pt; color: #555; }
+.contacts span { white-space: nowrap; }
+.top-divider { height: 2px; background: ${corPrimaria}; margin: 12px 0; }
+.section-title { font-size: 10pt; font-weight: 700; color: ${corPrimaria}; text-transform: uppercase; letter-spacing: 2px; margin: 14px 0 3px; }
+.divider { height: 1px; background: #ddd; margin-bottom: 8px; }
+.summary { font-size: 9.5pt; color: #333; line-height: 1.6; text-align: justify; }
+.job { margin-bottom: 11px; page-break-inside: avoid; }
+.job-row { display: flex; justify-content: space-between; }
+.job-title { font-weight: 700; font-size: 10pt; }
+.job-period { font-size: 8.5pt; color: #666; font-style: italic; white-space: nowrap; margin-left: 8px; }
+.job-company { font-size: 9pt; color: #444; font-style: italic; margin-bottom: 3px; }
+.job-desc { font-size: 9pt; color: #333; line-height: 1.45; }
+.edu-row { display: flex; justify-content: space-between; margin-bottom: 7px; page-break-inside: avoid; }
+.edu-course { font-weight: 700; font-size: 10pt; }
+.edu-inst { font-size: 9pt; color: #555; font-style: italic; }
+.edu-year { font-size: 8.5pt; color: #777; white-space: nowrap; margin-left: 8px; }
+.two-col { display: flex; gap: 24px; margin-top: 4px; }
+.col { flex: 1; }
+.skills-text { font-size: 9.5pt; color: #333; line-height: 1.7; }
+.lang-row { display: flex; justify-content: space-between; font-size: 9.5pt; margin-bottom: 4px; }
+.lang-lv { color: #666; font-style: italic; }
+.cert-item { font-size: 9pt; margin-bottom: 5px; }
+</style></head><body>
+
+<div class="header">
+  ${curriculo.fotoBase64 ? `<img src="${curriculo.fotoBase64}" class="photo">` : ''}
+  <div class="name">${curriculo.dadosPessoais?.nome || 'Seu Nome Completo'}</div>
+  <div class="contacts">
+    ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone,
+       curriculo.dadosPessoais?.cidade ? curriculo.dadosPessoais.cidade + (curriculo.dadosPessoais?.estado ? '/' + curriculo.dadosPessoais.estado : '') : null,
+       curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site]
+      .filter(Boolean).map(c => `<span>${c}</span>`).join(' &nbsp;|&nbsp; ')}
+  </div>
+</div>
+<div class="top-divider"></div>
+
+${curriculo.resumoProfissional ? `<div class="section-title">Perfil Profissional</div><div class="divider"></div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
+${curriculo.objetivoProfissional ? `<div class="section-title">Objetivo</div><div class="divider"></div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
+
+${curriculo.experiencias?.length ? `
+<div class="section-title">Experiência Profissional</div><div class="divider"></div>
+${curriculo.experiencias.map(exp => `
+<div class="job">
+  <div class="job-row">
+    <div class="job-title">${exp.cargo || ''}</div>
+    <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+  </div>
+  <div class="job-company">${exp.empresa || ''}</div>
+  ${exp.atividades ? `<div class="job-desc">${exp.atividades}</div>` : ''}
+</div>`).join('')}` : ''}
+
+${curriculo.formacao?.length ? `
+<div class="section-title">Formação Acadêmica</div><div class="divider"></div>
+${curriculo.formacao.map(f => `
+<div class="edu-row">
+  <div>
+    <div class="edu-course">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
+    <div class="edu-inst">${f.instituicao || ''}</div>
+  </div>
+  ${f.anoConclusao ? `<div class="edu-year">${formatDate(f.anoConclusao)}</div>` : ''}
+</div>`).join('')}` : ''}
+
+<div class="two-col">
+  ${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
+  <div class="col">
+    <div class="section-title">Habilidades</div><div class="divider"></div>
+    <div class="skills-text">${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => h.habilidade).join(' · ')}</div>
+  </div>` : ''}
+  ${curriculo.idiomas?.length ? `
+  <div class="col">
+    <div class="section-title">Idiomas</div><div class="divider"></div>
+    ${curriculo.idiomas.map(i => `
+    <div class="lang-row">
+      <b>${i.idioma}</b>
+      <span class="lang-lv">${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span>
+    </div>`).join('')}
+  </div>` : ''}
+</div>
+
+${curriculo.certificacoes?.length ? `
+<div class="section-title">Certificações</div><div class="divider"></div>
+${curriculo.certificacoes.map(c => `<div class="cert-item"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao)})` : ''}</div>`).join('')}` : ''}
+
+</body></html>`;

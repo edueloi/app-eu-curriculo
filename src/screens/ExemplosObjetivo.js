@@ -42,10 +42,11 @@ export default function ExemplosObjetivo({ navigation, route }) {
         frases: dados[locale] || dados.pt,
       }));
 
+    const normalize = (str) =>
+      str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/gi, '').toLowerCase();
     if (!searchQuery) return data;
-    return data.filter((item) =>
-      item.area.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const q = normalize(searchQuery);
+    return data.filter((item) => normalize(item.area).includes(q));
   }, [searchQuery, locale]);
 
   const renderItem = ({ item, index }) => (

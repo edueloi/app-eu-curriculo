@@ -238,7 +238,7 @@ export const translations = {
     skillsModuleDesc: "Equilibre o técnico e o comportamental.",
     commonErrorsTitle: "Erros Comuns a Evitar",
     commonErrorsDesc: "Revise antes de enviar!",
-    myResumesTitle: "Título do meu currículo",
+    myResumesTitle: "Meus Currículos",
     dashboard: "Início",
     tutorials: "Tutoriais",
     history: "Histórico",

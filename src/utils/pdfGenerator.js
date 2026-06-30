@@ -13,6 +13,10 @@ import {
   templateInverted,
   templateSplit,
   templateDark,
+  templateTimeline,
+  templateSideRight,
+  templateBold,
+  templateCompact,
 } from "../utils/pdfTemplates";
 
 // Função para adicionar um registo ao histórico (mantida como está)
@@ -63,6 +67,18 @@ export async function gerarPDF(curriculo, templateId = "classic", corPrimaria, t
         break;
       case "dark":
         htmlContent = templateDark(curriculo, corPrimaria, t);
+        break;
+      case "timeline":
+        htmlContent = templateTimeline(curriculo, corPrimaria, t);
+        break;
+      case "sideright":
+        htmlContent = templateSideRight(curriculo, corPrimaria, t);
+        break;
+      case "bold":
+        htmlContent = templateBold(curriculo, corPrimaria, t);
+        break;
+      case "compact":
+        htmlContent = templateCompact(curriculo, corPrimaria, t);
         break;
       default: // 'classic'
         htmlContent = templateClassic(curriculo, corPrimaria, t);
