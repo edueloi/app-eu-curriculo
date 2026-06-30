@@ -6,6 +6,7 @@ import {
 import { Text, useTheme, Snackbar } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Animatable from 'react-native-animatable';
 import { UserPreferencesContext } from '../context/UserPreferencesContext';
 import { curriculosExemplo } from '../utils/exemplosCurriculos';
@@ -64,7 +65,7 @@ function FloatingDot({ size, color, startX, startY, duration, delay }) {
   );
 }
 
-/* ── Ilustração centralizada na tela vazia ── */
+/* ── Ilustração tela vazia ── */
 function EmptyIllustration({ color }) {
   const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
@@ -78,9 +79,7 @@ function EmptyIllustration({ color }) {
 
   return (
     <Animated.View style={{ transform: [{ scale: pulse }], alignItems: 'center', justifyContent: 'center' }}>
-      {/* anel externo */}
       <View style={{ width: 140, height: 140, borderRadius: 70, backgroundColor: color + '14', justifyContent: 'center', alignItems: 'center' }}>
-        {/* anel interno */}
         <View style={{ width: 104, height: 104, borderRadius: 52, backgroundColor: color + '22', justifyContent: 'center', alignItems: 'center' }}>
           <LinearGradient
             colors={[color, color + 'BB']}
@@ -95,12 +94,12 @@ function EmptyIllustration({ color }) {
   );
 }
 
-export default function ListaCurriculos({ navigation }) {
+export default function ListaCurriculos({ navigation, route }) {
   const theme = useTheme();
   const { t } = useContext(UserPreferencesContext);
 
-  const [curriculos, setCurriculos]     = useState([]);
-  const [snackbarVisible, setSnackbar]  = useState(false);
+  const [curriculos, setCurriculos]    = useState([]);
+  const [snackbarVisible, setSnackbar] = useState(false);
 
   useFocusEffect(useCallback(() => { carregar(); }, []));
 
@@ -134,79 +133,110 @@ export default function ListaCurriculos({ navigation }) {
     return new Date(ds).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
+  /* ── HEADER FIXO ── */
+  const Header = () => (
+    <LinearGradient
+      colors={[theme.colors.primary, theme.colors.secondary]}
+      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+      style={s.header}
+    >
+      {/* blobs decorativos */}
+      <View style={[s.blob, { width: 180, height: 180, top: -70, right: -50, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+      <View style={[s.blob, { width: 90,  height: 90,  bottom: -30, left: -20, backgroundColor: 'rgba(255,255,255,0.06)' }]} />
+
+      <View style={s.headerRow}>
+        <TouchableOpacity onPress={() => navigation.openDrawer()} activeOpacity={0.8} style={s.headerBackBtn}>
+          <MaterialCommunityIcons name="menu" size={20} color="#fff" />
+        </TouchableOpacity>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={s.headerTitle}>{t('myResumesTitle')}</Text>
+          <Text style={s.headerSub}>
+            {curriculos.length === 0
+              ? 'Nenhum currículo ainda'
+              : `${curriculos.length} ${curriculos.length === 1 ? 'currículo' : 'currículos'}`}
+          </Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CriarCurrículo')}
+          activeOpacity={0.85}
+          style={s.headerAddBtn}
+        >
+          <MaterialCommunityIcons name="plus" size={22} color={theme.colors.primary} />
+        </TouchableOpacity>
+      </View>
+    </LinearGradient>
+  );
+
   /* ── TELA VAZIA ── */
   if (curriculos.length === 0) {
     const c = theme.colors.primary;
     return (
-      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-        {/* bolhas de fundo */}
-        <FloatingDot size={90}  color={c} startX={-20}       startY={60}         duration={3200} delay={0}    />
-        <FloatingDot size={55}  color={c} startX={width-60}  startY={140}        duration={2800} delay={400}  />
-        <FloatingDot size={36}  color={c} startX={width*0.4} startY={300}        duration={3600} delay={900}  />
-        <FloatingDot size={24}  color={c} startX={30}        startY={400}        duration={2600} delay={1200} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
+        <Header />
+        <View style={{ flex: 1 }}>
+          <FloatingDot size={90}  color={c} startX={-20}       startY={60}  duration={3200} delay={0}    />
+          <FloatingDot size={55}  color={c} startX={width-60}  startY={140} duration={2800} delay={400}  />
+          <FloatingDot size={36}  color={c} startX={width*0.4} startY={240} duration={3600} delay={900}  />
+          <FloatingDot size={24}  color={c} startX={30}        startY={340} duration={2600} delay={1200} />
 
-        {/* conteúdo */}
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }}>
-          <Animatable.View animation="zoomIn" duration={700} delay={100}>
-            <EmptyIllustration color={c} />
-          </Animatable.View>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }}>
+            <Animatable.View animation="zoomIn" duration={700} delay={100}>
+              <EmptyIllustration color={c} />
+            </Animatable.View>
 
-          <Animatable.View animation="fadeInUp" duration={600} delay={300} style={{ alignItems: 'center', marginTop: 32 }}>
-            <Text style={{ fontSize: 24, fontWeight: '900', color: theme.colors.onSurface, textAlign: 'center', letterSpacing: 0.2 }}>
-              {t('noResumesYet')}
-            </Text>
-            <Text style={{ fontSize: 15, color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 10, lineHeight: 22 }}>
-              {'Crie seu primeiro currículo\ne destaque-se no mercado!'}
-            </Text>
-          </Animatable.View>
+            <Animatable.View animation="fadeInUp" duration={600} delay={300} style={{ alignItems: 'center', marginTop: 32 }}>
+              <Text style={{ fontSize: 22, fontWeight: '900', color: theme.colors.onSurface, textAlign: 'center' }}>
+                {t('noResumesYet')}
+              </Text>
+              <Text style={{ fontSize: 14, color: theme.colors.onSurfaceVariant, textAlign: 'center', marginTop: 10, lineHeight: 22 }}>
+                {'Crie seu primeiro currículo\ne destaque-se no mercado!'}
+              </Text>
+            </Animatable.View>
 
-          <Animatable.View animation="fadeInUp" duration={600} delay={500} style={{ width: '100%', gap: 12, marginTop: 36 }}>
-            {/* botão criar */}
-            <TouchableOpacity
-              onPress={() => navigation.navigate('CriarCurrículo')}
-              activeOpacity={0.88}
-              style={{ borderRadius: 28, overflow: 'hidden', elevation: 8, shadowColor: c, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12 }}
-            >
-              <LinearGradient
-                colors={[c, theme.colors.secondary]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 17 }}
+            <Animatable.View animation="fadeInUp" duration={600} delay={500} style={{ width: '100%', gap: 12, marginTop: 36 }}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('CriarCurrículo')}
+                activeOpacity={0.88}
+                style={{ borderRadius: 28, overflow: 'hidden', elevation: 8, shadowColor: c, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12 }}
               >
-                <MaterialCommunityIcons name="plus-circle" size={22} color="#fff" />
-                <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{t('createResume')}</Text>
-              </LinearGradient>
-            </TouchableOpacity>
+                <LinearGradient
+                  colors={[c, theme.colors.secondary]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 17 }}
+                >
+                  <MaterialCommunityIcons name="plus-circle" size={22} color="#fff" />
+                  <Text style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>{t('createResume')}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
 
-            {/* botão exemplos */}
-            <TouchableOpacity
-              onPress={carregarExemplos}
-              activeOpacity={0.8}
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 28, borderWidth: 1.5, borderColor: c + '55', backgroundColor: c + '0D' }}
-            >
-              <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={c} />
-              <Text style={{ color: c, fontWeight: '700', fontSize: 14 }}>Carregar exemplos</Text>
-            </TouchableOpacity>
-          </Animatable.View>
+              <TouchableOpacity
+                onPress={carregarExemplos}
+                activeOpacity={0.8}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 14, borderRadius: 28, borderWidth: 1.5, borderColor: c + '55', backgroundColor: c + '0D' }}
+              >
+                <MaterialCommunityIcons name="lightbulb-on-outline" size={18} color={c} />
+                <Text style={{ color: c, fontWeight: '700', fontSize: 14 }}>Carregar exemplos</Text>
+              </TouchableOpacity>
+            </Animatable.View>
 
-          {/* chips de dicas */}
-          <Animatable.View animation="fadeInUp" duration={600} delay={700} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 32 }}>
-            {['Modelos profissionais', 'Export PDF', 'Múltiplos idiomas'].map((tip, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c + '12', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1, borderColor: c + '22' }}>
-                <MaterialCommunityIcons name={['star-four-points', 'file-pdf-box', 'translate'][i]} size={13} color={c} />
-                <Text style={{ fontSize: 12, fontWeight: '600', color: c }}>{tip}</Text>
-              </View>
-            ))}
-          </Animatable.View>
+            <Animatable.View animation="fadeInUp" duration={600} delay={700} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 28 }}>
+              {['Modelos profissionais', 'Export PDF', 'Múltiplos idiomas'].map((tip, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: c + '12', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 12, borderWidth: 1, borderColor: c + '22' }}>
+                  <MaterialCommunityIcons name={['star-four-points', 'file-pdf-box', 'translate'][i]} size={13} color={c} />
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: c }}>{tip}</Text>
+                </View>
+              ))}
+            </Animatable.View>
+          </View>
         </View>
-
         <Snackbar visible={snackbarVisible} onDismiss={() => setSnackbar(false)} duration={2000}>
           {t('deleteSuccess')}
         </Snackbar>
-      </View>
+      </SafeAreaView>
     );
   }
 
-  /* ── LISTA COM CURRÍCULOS ── */
+  /* ── CARD ── */
   const renderItem = ({ item: cur, index }) => {
     const [c1, c2] = CARD_COLORS[index % CARD_COLORS.length];
     const initials  = getInitials(cur.nomeInterno || `C${index + 1}`);
@@ -215,13 +245,13 @@ export default function ListaCurriculos({ navigation }) {
     const completude = calcCompletude(cur);
 
     return (
-      <Animatable.View animation="fadeInUp" duration={500} delay={index * 70}>
-        <View style={[s.card, { backgroundColor: theme.colors.surface, borderColor: c1 + '25' }]}>
-          {/* faixa colorida lateral */}
+      <Animatable.View animation="fadeInUp" duration={500} delay={index * 60}>
+        <View style={[s.card, { backgroundColor: theme.colors.surface, borderColor: c1 + '28' }]}>
+          {/* faixa lateral */}
           <LinearGradient colors={[c1, c2]} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={s.cardStripe} />
 
-          {/* avatar */}
           <View style={s.cardBody}>
+            {/* topo */}
             <View style={s.cardTop}>
               {cur.fotoBase64 ? (
                 <View style={[s.avatar, { borderColor: c1 }]}>
@@ -236,9 +266,12 @@ export default function ListaCurriculos({ navigation }) {
               <View style={{ flex: 1, marginLeft: 14 }}>
                 <Text style={[s.cardName, { color: theme.colors.onSurface }]} numberOfLines={1}>{nome}</Text>
                 {profissao ? <Text style={[s.cardSub, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>{profissao}</Text> : null}
-                <Text style={[s.cardDate, { color: theme.colors.onSurfaceVariant }]}>
-                  {`${t('updatedOn')} ${fmtDate(cur.lastUpdated)}`}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                  <MaterialCommunityIcons name="clock-outline" size={11} color={theme.colors.onSurfaceVariant} />
+                  <Text style={[s.cardDate, { color: theme.colors.onSurfaceVariant }]}>
+                    {fmtDate(cur.lastUpdated)}
+                  </Text>
+                </View>
               </View>
 
               <TouchableOpacity
@@ -251,14 +284,19 @@ export default function ListaCurriculos({ navigation }) {
 
             {/* barra de completude */}
             <View style={s.progressRow}>
-              <View style={[s.progressTrack, { backgroundColor: theme.colors.outlineVariant }]}>
-                <LinearGradient
-                  colors={[c1, c2]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  style={[s.progressFill, { width: `${completude}%` }]}
-                />
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <Text style={{ fontSize: 10, color: theme.colors.onSurfaceVariant, fontWeight: '600' }}>Completude do perfil</Text>
+                  <Text style={[s.progressLabel, { color: c1 }]}>{`${completude}%`}</Text>
+                </View>
+                <View style={[s.progressTrack, { backgroundColor: theme.colors.outlineVariant }]}>
+                  <LinearGradient
+                    colors={[c1, c2]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                    style={[s.progressFill, { width: `${completude}%` }]}
+                  />
+                </View>
               </View>
-              <Text style={[s.progressLabel, { color: c1 }]}>{`${completude}%`}</Text>
             </View>
 
             {/* botões */}
@@ -293,60 +331,62 @@ export default function ListaCurriculos({ navigation }) {
     );
   };
 
-  const ListHeader = () => (
-    <Animatable.View animation="fadeInDown" duration={500} style={{ marginBottom: 20 }}>
-      <LinearGradient
-        colors={[theme.colors.primary, theme.colors.secondary]}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={s.header}
-      >
-        <View style={s.hb1} /><View style={s.hb2} />
-        <Text style={s.headerTitle}>{t('myResumesTitle')}</Text>
-        <Text style={s.headerCount}>{`${curriculos.length} ${t('resumes') || 'Currículos'}`}</Text>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('CriarCurrículo')}
-          activeOpacity={0.85}
-          style={s.headerBtn}
-        >
-          <MaterialCommunityIcons name="plus" size={16} color={theme.colors.primary} />
-          <Text style={[s.headerBtnText, { color: theme.colors.primary }]}>{t('createResume')}</Text>
-        </TouchableOpacity>
-      </LinearGradient>
-    </Animatable.View>
-  );
-
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
+      <Header />
       <FlatList
         data={curriculos}
         renderItem={renderItem}
         keyExtractor={(_, i) => i.toString()}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-        ListHeaderComponent={<ListHeader />}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
       />
       <Snackbar visible={snackbarVisible} onDismiss={() => setSnackbar(false)} duration={2500}>
         {t('deleteSuccess')}
       </Snackbar>
-    </View>
+    </SafeAreaView>
   );
 }
 
-/* ── completude do currículo ── */
+/* ── completude ── */
 function calcCompletude(cur) {
   let filled = 0, total = 6;
-  if (cur.dadosPessoais?.nome)            filled++;
-  if (cur.dadosPessoais?.email)           filled++;
-  if (cur.dadosPessoais?.telefone)        filled++;
-  if (cur.resumoProfissional)             filled++;
-  if ((cur.experiencias||[]).length > 0)  filled++;
-  if ((cur.formacao||[]).length > 0)      filled++;
+  if (cur.dadosPessoais?.nome)           filled++;
+  if (cur.dadosPessoais?.email)          filled++;
+  if (cur.dadosPessoais?.telefone)       filled++;
+  if (cur.resumoProfissional)            filled++;
+  if ((cur.experiencias||[]).length > 0) filled++;
+  if ((cur.formacao||[]).length > 0)     filled++;
   return Math.round((filled / total) * 100);
 }
 
-/* ── styles ── */
 const s = StyleSheet.create({
+  /* HEADER FIXO */
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 20,
+    overflow: 'hidden',
+  },
+  blob: { position: 'absolute', borderRadius: 999 },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  headerTitle: { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: 0.2 },
+  headerSub:   { color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 3, fontWeight: '500' },
+  headerBackBtn: {
+    width: 40, height: 40, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  headerAddBtn: {
+    width: 44, height: 44, borderRadius: 14,
+    backgroundColor: '#fff',
+    justifyContent: 'center', alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6,
+  },
+
+  /* CARD */
   card: {
     flexDirection: 'row',
     borderRadius: 20,
@@ -367,27 +407,19 @@ const s = StyleSheet.create({
   avatarGrad:     { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
   avatarInitials: { color: '#fff', fontSize: 20, fontWeight: '900' },
 
-  cardName: { fontSize: 16, fontWeight: '800' },
-  cardSub:  { fontSize: 12, marginTop: 2 },
-  cardDate: { fontSize: 11, marginTop: 3, opacity: 0.7 },
+  cardName: { fontSize: 15, fontWeight: '800' },
+  cardSub:  { fontSize: 12, marginTop: 1 },
+  cardDate: { fontSize: 11 },
 
   deleteBtn: { width: 34, height: 34, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
 
-  progressRow:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14 },
-  progressTrack:{ flex: 1, height: 5, borderRadius: 3, overflow: 'hidden' },
+  progressRow:  { marginTop: 14 },
+  progressTrack:{ height: 5, borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: 5, borderRadius: 3 },
-  progressLabel:{ fontSize: 11, fontWeight: '800', minWidth: 32, textAlign: 'right' },
+  progressLabel:{ fontSize: 11, fontWeight: '800' },
 
-  cardActions: { flexDirection: 'row', gap: 10, marginTop: 14, paddingTop: 14, borderTopWidth: 1 },
-  actionBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 14, borderWidth: 1.5 },
+  cardActions:     { flexDirection: 'row', gap: 10, marginTop: 14, paddingTop: 14, borderTopWidth: 1 },
+  actionBtn:       { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 14, borderWidth: 1.5 },
   actionBtnFilled: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10 },
   actionBtnText:   { fontWeight: '700', fontSize: 13 },
-
-  header: { borderRadius: 22, padding: 22, overflow: 'hidden', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.18, shadowRadius: 10 },
-  hb1: { position: 'absolute', width: 160, height: 160, borderRadius: 80, backgroundColor: 'rgba(255,255,255,0.07)', top: -60, right: -40 },
-  hb2: { position: 'absolute', width: 70,  height: 70,  borderRadius: 35, backgroundColor: 'rgba(255,255,255,0.07)', bottom: -20, left: 20 },
-  headerTitle:   { color: '#fff', fontSize: 22, fontWeight: '900' },
-  headerCount:   { color: 'rgba(255,255,255,0.8)', fontSize: 14, marginTop: 4, marginBottom: 16 },
-  headerBtn:     { flexDirection: 'row', alignItems: 'center', gap: 7, alignSelf: 'flex-start', backgroundColor: '#fff', borderRadius: 22, paddingVertical: 9, paddingHorizontal: 18, elevation: 2 },
-  headerBtnText: { fontWeight: '800', fontSize: 13 },
 });

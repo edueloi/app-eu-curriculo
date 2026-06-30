@@ -99,16 +99,15 @@ export default function PreviewCurriculo({ route, navigation }) {
   useEffect(() => {
     const fn = TEMPLATE_MAP[template] || templateClassic;
     let html = fn(curriculo, g1, t);
-    
-    // Substitui a viewport para uma largura de documento A4, forçando fidelidade ao PDF
+
     html = html.replace(
       '<meta name="viewport" content="width=device-width, initial-scale=1">',
       '<meta name="viewport" content="width=794">'
     );
 
     setHtmlContent(html);
-    // fallback: se o onMessage nunca disparar, remove o loading após 4s
-    loadingTimerRef.current = setTimeout(() => setIsLoading(false), 4000);
+    // fallback garantido: remove o loading após 5s independente do que acontecer
+    loadingTimerRef.current = setTimeout(() => setIsLoading(false), 5000);
     return () => clearTimeout(loadingTimerRef.current);
   }, []);
 
@@ -175,9 +174,12 @@ export default function PreviewCurriculo({ route, navigation }) {
                 injectedJavaScript={injectedJavaScript}
                 onMessage={onMessage}
                 onLoad={() => {
-                  // garante remoção do loading quando o WebView termina de carregar
                   clearTimeout(loadingTimerRef.current);
-                  loadingTimerRef.current = setTimeout(() => setIsLoading(false), 800);
+                  setIsLoading(false);
+                }}
+                onError={() => {
+                  clearTimeout(loadingTimerRef.current);
+                  setIsLoading(false);
                 }}
                 javaScriptEnabled
                 scrollEnabled={false}

@@ -110,7 +110,7 @@ export default function AboutScreen() {
             </Animatable.View>
 
             <Animatable.View animation="fadeInUp" duration={600} delay={400} style={{ alignItems:'center' }}>
-              <Text style={s.heroTitle}>{t('aboutAppTitle') || 'App Currículos'}</Text>
+              <Text style={s.heroTitle}>{t('aboutAppTitle') || 'Currículo Expresso'}</Text>
               <Text style={s.heroSub}>{t('aboutAppDescription') || 'Crie currículos profissionais em minutos'}</Text>
               <View style={s.versionBadge}>
                 <MaterialCommunityIcons name="tag" size={12} color="#fff" />
@@ -273,7 +273,7 @@ export default function AboutScreen() {
               </Animatable.View>
               <Text style={s.thanksTitle}>{t('acknowledgmentsTitle') || 'Obrigado!'}</Text>
               <Text style={s.thanksBody}>
-                {t('specialThanks') || 'Obrigado por usar o App Currículos. Que ele te ajude a alcançar seus objetivos profissionais!'}
+                {t('specialThanks') || 'Obrigado por usar o Currículo Expresso. Que ele te ajude a alcançar seus objetivos profissionais!'}
               </Text>
               {/* tech stack pills */}
               <View style={s.techRow}>

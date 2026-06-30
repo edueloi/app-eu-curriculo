@@ -7,6 +7,7 @@ import { Text, useTheme } from 'react-native-paper';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { UserPreferencesContext } from '../context/UserPreferencesContext';
 import { gerarPDF } from '../utils/pdfGenerator';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -206,7 +207,7 @@ export default function SelecionarTemplate({ route, navigation }) {
   const hero = HERO_TEXT[lang] || HERO_TEXT['pt-BR'];
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
       <FlatList
         data={filtered}
         renderItem={({ item, index }) => (
@@ -317,7 +318,7 @@ export default function SelecionarTemplate({ route, navigation }) {
           </>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -325,7 +326,7 @@ export default function SelecionarTemplate({ route, navigation }) {
 const s = StyleSheet.create({
   hero: {
     margin: 16,
-    marginTop: Platform.OS === 'ios' ? 54 : (StatusBar.currentHeight || 24) + 8,
+    marginTop: 8,
     borderRadius: 28,
     padding: 24,
     paddingTop: 56,

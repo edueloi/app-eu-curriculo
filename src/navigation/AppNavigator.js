@@ -56,64 +56,62 @@ function CustomDrawerContent(props) {
   const userName = profile?.nome      || t('user');
   const userRole = profile?.profissao || t('profile');
 
-  // Sidebar sempre escura (dark glass)
-  const BG       = '#0F172A';
-  const BG2      = '#1E293B';
-  const BORDER   = 'rgba(255,255,255,0.07)';
-  const MUTED    = 'rgba(255,255,255,0.45)';
-  const BRIGHT   = '#F1F5F9';
+  const BG     = '#FFFFFF';
+  const BORDER = '#F1F5F9';
+  const MUTED  = '#94A3B8';
+  const DARK   = '#1E293B';
 
   return (
     <View style={[d.root, { backgroundColor: BG }]}>
 
-      {/* ══ HEADER ══ */}
-      <View style={[d.header, { paddingTop: insets.top + 18 }]}>
-        {/* glow blob */}
-        <View style={[d.glow, { backgroundColor: theme.colors.primary + '40' }]} />
+      {/* ══ HEADER com gradiente ══ */}
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.secondary || theme.colors.primary]}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={[d.header, { paddingTop: insets.top + 20 }]}
+      >
+        {/* blob decorativo */}
+        <View style={[d.glow, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+        <View style={[d.glow2, { backgroundColor: 'rgba(255,255,255,0.07)' }]} />
 
-        {/* linha de perfil */}
+        {/* perfil */}
         <View style={d.profileRow}>
-          <View style={[d.avatarRing, { borderColor: theme.colors.primary }]}>
+          <View style={[d.avatarRing, { borderColor: 'rgba(255,255,255,0.6)' }]}>
             {profile?.foto ? (
               <Image source={{ uri: profile.foto }} style={d.avatarImg} />
             ) : (
-              <LinearGradient
-                colors={[theme.colors.primary, theme.colors.secondary || theme.colors.primary]}
-                style={d.avatarFallback}
-              >
+              <View style={[d.avatarFallback, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
                 <Text style={d.avatarInitials}>{getInitials(userName)}</Text>
-              </LinearGradient>
+              </View>
             )}
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={[d.name, { color: BRIGHT }]} numberOfLines={1}>{userName}</Text>
-            <Text style={[d.role, { color: MUTED }]} numberOfLines={1}>{userRole}</Text>
+            <Text style={[d.name, { color: '#fff' }]} numberOfLines={1}>{userName}</Text>
+            <Text style={[d.role, { color: 'rgba(255,255,255,0.7)' }]} numberOfLines={1}>{userRole}</Text>
           </View>
         </View>
 
-        {/* pill "novo currículo" */}
+        {/* botão novo currículo */}
         <TouchableOpacity
-          style={[d.newBtn, { backgroundColor: theme.colors.primary }]}
+          style={d.newBtn}
           onPress={() => props.navigation.navigate('CriarCurrículo')}
           activeOpacity={0.82}
         >
-          <MaterialCommunityIcons name="plus" size={15} color="#fff" />
-          <Text style={d.newBtnTxt}>{t('createResume')}</Text>
+          <MaterialCommunityIcons name="plus" size={15} color={theme.colors.primary} />
+          <Text style={[d.newBtnTxt, { color: theme.colors.primary }]}>{t('createResume')}</Text>
         </TouchableOpacity>
-
-        <View style={[d.headerDivider, { backgroundColor: BORDER }]} />
-      </View>
+      </LinearGradient>
 
       {/* ══ ITENS ══ */}
       <DrawerContentScrollView
         {...props}
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 4, paddingBottom: 16 }}
+        style={{ flex: 1, backgroundColor: BG }}
+        contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 8, paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
         {MENU_SECTIONS.map((section, si) => (
-          <View key={si} style={{ marginBottom: 6 }}>
+          <View key={si} style={{ marginBottom: 4 }}>
             {section.title && (
               <Text style={[d.sectionLabel, { color: MUTED }]}>
                 {section.title.toUpperCase()}
@@ -129,26 +127,24 @@ function CustomDrawerContent(props) {
                   activeOpacity={0.7}
                   style={[
                     d.item,
-                    { backgroundColor: isActive ? item.color + '22' : 'transparent' },
+                    { backgroundColor: isActive ? item.color + '15' : 'transparent' },
                     isActive && { borderLeftWidth: 3, borderLeftColor: item.color },
                   ]}
                 >
-                  {/* ícone */}
                   <View style={[
                     d.iconPill,
-                    { backgroundColor: isActive ? item.color : BG2 },
+                    { backgroundColor: isActive ? item.color : item.color + '15' },
                   ]}>
                     <MaterialCommunityIcons
                       name={isActive ? item.activeIcon : item.icon}
                       size={18}
-                      color={isActive ? '#fff' : MUTED}
+                      color={isActive ? '#fff' : item.color}
                     />
                   </View>
 
-                  {/* label */}
                   <Text style={[
                     d.itemLabel,
-                    { color: isActive ? '#fff' : MUTED, fontWeight: isActive ? '800' : '400' },
+                    { color: isActive ? item.color : DARK, fontWeight: isActive ? '800' : '500' },
                   ]}>
                     {t(item.labelKey)}
                   </Text>
@@ -169,7 +165,7 @@ function CustomDrawerContent(props) {
 
       {/* ══ RODAPÉ ══ */}
       <View style={[d.footer, { paddingBottom: insets.bottom + 14, borderTopColor: BORDER }]}>
-        <Text style={[d.footerText, { color: MUTED }]}>App Currículos  •  v1.0</Text>
+        <Text style={[d.footerText, { color: MUTED }]}>Currículo Expresso  •  v1.0</Text>
       </View>
     </View>
   );
@@ -215,21 +211,21 @@ export function AppNavigator() {
         overlayColor: 'rgba(0,0,0,0.55)',
         drawerStyle: {
           width: '76%',
-          backgroundColor: '#0F172A',
+          backgroundColor: '#FFFFFF',
           borderTopRightRadius: 32,
           borderBottomRightRadius: 32,
           overflow: 'hidden',
           elevation: 30,
           shadowColor: '#000',
           shadowOffset: { width: 10, height: 0 },
-          shadowOpacity: 0.4,
+          shadowOpacity: 0.18,
           shadowRadius: 28,
         },
         swipeEnabled: true,
       })}
     >
       <Drawer.Screen name="Início"          component={TelaInicial}    options={{ title: t('dashboard') }} />
-      <Drawer.Screen name="MeusCurriculos"  component={ListaCurriculos} options={{ title: t('resumes') }} />
+      <Drawer.Screen name="MeusCurriculos"  component={ListaCurriculos} options={{ headerShown: false }} />
       <Drawer.Screen name="CriarCurrículo"  component={TelaFormulario}  options={{ headerShown: false, drawerItemStyle: { display: 'none' } }} />
       <Drawer.Screen name="Histórico"       component={TelaHistorico}  options={{ title: t('history') }} />
       <Drawer.Screen name="Tutoriais"       component={TelaTutoriais}  options={{ title: t('tutorials') }} />
@@ -247,15 +243,20 @@ const d = StyleSheet.create({
   /* HEADER */
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 0,
-    position: 'relative',
+    paddingBottom: 20,
     overflow: 'hidden',
   },
   glow: {
     position: 'absolute',
-    width: 200, height: 200,
-    borderRadius: 100,
-    top: -80, right: -60,
+    width: 160, height: 160,
+    borderRadius: 80,
+    top: -50, right: -40,
+  },
+  glow2: {
+    position: 'absolute',
+    width: 100, height: 100,
+    borderRadius: 50,
+    bottom: -20, left: -20,
   },
   profileRow: {
     flexDirection: 'row',
@@ -266,7 +267,7 @@ const d = StyleSheet.create({
   avatarRing: {
     width: 56, height: 56,
     borderRadius: 28,
-    borderWidth: 2.5,
+    borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -284,15 +285,13 @@ const d = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     alignSelf: 'stretch',
     borderRadius: 14,
-    paddingVertical: 12, paddingHorizontal: 16,
-    marginBottom: 20,
-    elevation: 4,
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8,
+    paddingVertical: 11, paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6,
   },
-  newBtnTxt: { color: '#fff', fontSize: 14, fontWeight: '800', flex: 1 },
-
-  headerDivider: { height: 1, marginBottom: 8 },
+  newBtnTxt: { fontSize: 14, fontWeight: '800', flex: 1 },
 
   /* SEÇÕES */
   sectionLabel: {
