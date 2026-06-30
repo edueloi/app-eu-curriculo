@@ -5,6 +5,7 @@ import { UserPreferencesContext } from '../context/UserPreferencesContext';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -837,6 +838,7 @@ const CAT_ALL_LABELS = { 'pt-BR': 'Todos', en: 'All', es: 'Todos' };
 
 export default function BlogScreen({ navigation }) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { language } = useContext(UserPreferencesContext);
   const lang = TIPS_DATA[language] ? language : 'pt-BR';
   const data = TIPS_DATA[lang];
@@ -851,27 +853,37 @@ export default function BlogScreen({ navigation }) {
   const visibleCats = activeCat === 'all' ? data.categories : data.categories.filter(c => c.key === activeCat);
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
 
-        {/* ══ HERO ══ */}
-        <Animatable.View animation="fadeInDown" duration={500}>
-          <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} start={{ x:0,y:0 }} end={{ x:1,y:1 }} style={s.hero}>
-            <View style={s.hb1} /><View style={s.hb2} />
-            <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-              <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
-            </TouchableOpacity>
-            <MaterialCommunityIcons name="lightbulb-on" size={38} color="rgba(255,255,255,0.25)" style={{ marginBottom: 8 }} />
-            <Text style={s.heroTitle}>{data.heroTitle}</Text>
-            <Text style={s.heroSub}>{data.heroSub}</Text>
-            <View style={s.heroBadge}>
-              <MaterialCommunityIcons name="bookmark-multiple" size={13} color="#fff" />
-              <Text style={s.heroBadgeTxt}>
-                {`${data.categories.reduce((a, c) => a + c.tips.length, 0)} dicas`}
-              </Text>
-            </View>
-          </LinearGradient>
-        </Animatable.View>
+        {/* ── header fixo branco ── */}
+        <View style={[s.fixedHeader, { backgroundColor: theme.colors.background, borderBottomColor: theme.colors.outlineVariant }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={s.navBtn}>
+            <MaterialCommunityIcons name="arrow-left" size={22} color={theme.colors.onSurface} />
+          </TouchableOpacity>
+          <Text style={[s.headerTitle, { color: theme.colors.onSurface }]} numberOfLines={1}>
+            {lang === 'en' ? 'Career Tips' : lang === 'es' ? 'Consejos de Carrera' : 'Dicas de Carreira'}
+          </Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 48 }}>
+
+          {/* ══ HERO ══ */}
+          <Animatable.View animation="fadeInDown" duration={500}>
+            <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} start={{ x:0,y:0 }} end={{ x:1,y:1 }} style={s.hero}>
+              <View style={s.hb1} /><View style={s.hb2} />
+              <MaterialCommunityIcons name="lightbulb-on" size={38} color="rgba(255,255,255,0.25)" style={{ marginBottom: 8 }} />
+              <Text style={s.heroTitle}>{data.heroTitle}</Text>
+              <Text style={s.heroSub}>{data.heroSub}</Text>
+              <View style={s.heroBadge}>
+                <MaterialCommunityIcons name="bookmark-multiple" size={13} color="#fff" />
+                <Text style={s.heroBadgeTxt}>
+                  {`${data.categories.reduce((a, c) => a + c.tips.length, 0)} dicas`}
+                </Text>
+              </View>
+            </LinearGradient>
+          </Animatable.View>
 
         {/* ══ FILTRO CATEGORIAS ══ */}
         <Animatable.View animation="fadeInUp" duration={400} delay={100}>
@@ -949,16 +961,22 @@ export default function BlogScreen({ navigation }) {
           ))}
         </View>
 
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
-  hero:        { paddingTop: Platform.OS === 'ios' ? 54 : 44, paddingBottom: 26, paddingHorizontal: 22, overflow: 'hidden' },
+  fixedHeader:  { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, gap: 12 },
+  navBtn:       { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  headerTitle:  { flex: 1, fontSize: 17, fontWeight: '800' },
+  hero:        { paddingTop: 20, paddingBottom: 26, paddingHorizontal: 22, overflow: 'hidden' },
   hb1:         { position:'absolute', width:200, height:200, borderRadius:100, backgroundColor:'rgba(255,255,255,0.07)', top:-70, right:-50 },
   hb2:         { position:'absolute', width:80,  height:80,  borderRadius:40,  backgroundColor:'rgba(255,255,255,0.07)', bottom:-20, left:10 },
-  backBtn:     { width:38, height:38, borderRadius:11, backgroundColor:'rgba(255,255,255,0.2)', justifyContent:'center', alignItems:'center', marginBottom:14 },
+  backBtn:     { width:38, height:38, borderRadius:11, backgroundColor:'rgba(255,255,255,0.2)', justifyContent:'center', alignItems:'center' },
+  navBar:      { position:'absolute', top:0, left:0, right:0, zIndex:100, flexDirection:'row', justifyContent:'space-between', paddingHorizontal:16, paddingBottom:10 },
+  navBtn:      { width:40, height:40, borderRadius:12, backgroundColor:'rgba(0,0,0,0.25)', justifyContent:'center', alignItems:'center' },
   heroTitle:   { color:'#fff', fontSize:24, fontWeight:'900', letterSpacing:0.2 },
   heroSub:     { color:'rgba(255,255,255,0.85)', fontSize:14, marginTop:6, lineHeight:20 },
   heroBadge:   { flexDirection:'row', alignItems:'center', gap:6, marginTop:14, backgroundColor:'rgba(255,255,255,0.2)', alignSelf:'flex-start', paddingVertical:6, paddingHorizontal:14, borderRadius:20 },

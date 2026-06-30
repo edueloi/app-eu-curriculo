@@ -89,18 +89,18 @@ export const translations = {
     article4Title: "Negociação salarial: Como pedir um aumento",
     article4Category: "CARREIRA",
     readArticle: "Ler Artigo",
-    welcome_title_1: "Bem-vindo ao Criador de Currículos",
+    welcome_title_1: "Crie seu Currículo",
     welcome_text_1:
-      "Crie documentos profissionais e modernos em poucos minutos.",
-    welcome_title_2: "Personalização Total",
+      "Preencha seus dados pessoais, experiências e formação em minutos. Tudo organizado e profissional.",
+    welcome_title_2: "Escolha seu Estilo",
     welcome_text_2:
-      "Escolha templates, cores e fontes para um currículo único.",
-    welcome_title_3: "Exporte e Partilhe",
+      "8 templates modernos e exclusivos. Personalize para se destacar em qualquer vaga.",
+    welcome_title_3: "Exporte em PDF",
     welcome_text_3:
-      "Gere o seu currículo em PDF com um toque e envie para as melhores vagas.",
-    welcome_title_4: "Tudo Pronto para o Sucesso!",
+      "Gere seu currículo em PDF com um toque. Pronto para enviar às melhores empresas.",
+    welcome_title_4: "Sua Carreira Começa Aqui!",
     welcome_text_4:
-      "Vamos juntos conquistar a sua próxima grande oportunidade. 🙏",
+      "Você está a um passo de conquistar sua próxima grande oportunidade. Bora lá! 🚀",
     skip: "Pular",
     next: "Próximo",
     startNow: "Começar Agora",

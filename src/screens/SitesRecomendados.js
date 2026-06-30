@@ -8,6 +8,7 @@ import { UserPreferencesContext } from '../context/UserPreferencesContext';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -595,6 +596,7 @@ function PlatformCard({ p, lang, theme }) {
 /* ─── TELA PRINCIPAL ─── */
 export default function SitesRecomendados({ navigation }) {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { language } = useContext(UserPreferencesContext);
   const lang  = ['pt-BR','en','es'].includes(language) ? language : 'pt-BR';
   const hero  = HERO[lang] || HERO['pt-BR'];
@@ -607,29 +609,61 @@ export default function SitesRecomendados({ navigation }) {
     : PLATFORMS.filter(p => p.category === activeCat);
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['top']}>
+      <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
 
-        {/* ══ HERO ══ */}
-        <Animatable.View animation="fadeInDown" duration={500}>
-          <LinearGradient
-            colors={[theme.colors.primary, theme.colors.secondary]}
-            start={{ x:0,y:0 }} end={{ x:1,y:1 }}
-            style={s.hero}
-          >
-            <View style={s.heroHb1} /><View style={s.heroHb2} />
-            <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-              <MaterialCommunityIcons name="arrow-left" size={22} color="#fff" />
-            </TouchableOpacity>
-            <MaterialCommunityIcons name="briefcase-search" size={40} color="rgba(255,255,255,0.25)" style={{ marginBottom: 10 }} />
-            <Text style={s.heroTitle}>{hero.title}</Text>
-            <Text style={s.heroSub}>{hero.sub}</Text>
-            <View style={s.heroBadge}>
-              <MaterialCommunityIcons name="check-decagram" size={14} color="#fff" />
-              <Text style={s.heroBadgeText}>{`${PLATFORMS.length} plataformas selecionadas`}</Text>
-            </View>
-          </LinearGradient>
-        </Animatable.View>
+        {/* ── header fixo branco ── */}
+        <View style={[s.fixedHeader, { backgroundColor: theme.colors.background, borderBottomColor: theme.colors.outlineVariant }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={s.navBtn}>
+            <MaterialCommunityIcons name="arrow-left" size={22} color={theme.colors.onSurface} />
+          </TouchableOpacity>
+          <Text style={[s.headerTitle, { color: theme.colors.onSurface }]} numberOfLines={1}>
+            {lang === 'en' ? 'Job Boards' : lang === 'es' ? 'Bolsas de Trabajo' : 'Encontrar Vagas'}
+          </Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+
+          {/* ══ HERO ══ */}
+          <Animatable.View animation="fadeInDown" duration={500}>
+            <LinearGradient
+              colors={[theme.colors.primary, theme.colors.secondary]}
+              start={{ x:0,y:0 }} end={{ x:1,y:1 }}
+              style={s.hero}
+            >
+              <View style={s.heroHb1} /><View style={s.heroHb2} />
+
+              {/* ícone + texto alinhados à esquerda */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+                <View style={s.heroIconBox}>
+                  <MaterialCommunityIcons name="briefcase-search" size={30} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.heroTitle}>{hero.title}</Text>
+                  <Text style={s.heroSub}>{hero.sub}</Text>
+                </View>
+              </View>
+
+              {/* stats row */}
+              <View style={s.heroStats}>
+                <View style={s.heroStat}>
+                  <Text style={s.heroStatVal}>{PLATFORMS.length}</Text>
+                  <Text style={s.heroStatLabel}>{lang === 'en' ? 'Platforms' : 'Plataformas'}</Text>
+                </View>
+                <View style={s.heroStatDiv} />
+                <View style={s.heroStat}>
+                  <Text style={s.heroStatVal}>{'5'}</Text>
+                  <Text style={s.heroStatLabel}>{lang === 'en' ? 'Categories' : 'Categorias'}</Text>
+                </View>
+                <View style={s.heroStatDiv} />
+                <View style={s.heroStat}>
+                  <Text style={s.heroStatVal}>{'100%'}</Text>
+                  <Text style={s.heroStatLabel}>{lang === 'en' ? 'Free' : 'Gratuito'}</Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </Animatable.View>
 
         {/* ══ FILTROS DE CATEGORIA ══ */}
         <Animatable.View animation="fadeInUp" duration={400} delay={100}>
@@ -668,21 +702,28 @@ export default function SitesRecomendados({ navigation }) {
           ))}
         </View>
 
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 }
 
 /* ─── styles ─── */
 const s = StyleSheet.create({
-  hero:      { paddingTop: Platform.OS === 'ios' ? 54 : 44, paddingBottom: 28, paddingHorizontal: 22, overflow: 'hidden' },
-  heroHb1:   { position:'absolute', width:200, height:200, borderRadius:100, backgroundColor:'rgba(255,255,255,0.07)', top:-70, right:-50 },
-  heroHb2:   { position:'absolute', width:90,  height:90,  borderRadius:45,  backgroundColor:'rgba(255,255,255,0.07)', bottom:-20, left:10 },
-  backBtn:   { width:38, height:38, borderRadius:11, backgroundColor:'rgba(255,255,255,0.2)', justifyContent:'center', alignItems:'center', marginBottom:14 },
-  heroTitle: { color:'#fff', fontSize:24, fontWeight:'900', letterSpacing:0.2 },
-  heroSub:   { color:'rgba(255,255,255,0.85)', fontSize:14, marginTop:6, lineHeight:20 },
-  heroBadge: { flexDirection:'row', alignItems:'center', gap:6, marginTop:14, backgroundColor:'rgba(255,255,255,0.2)', alignSelf:'flex-start', paddingVertical:6, paddingHorizontal:14, borderRadius:20 },
-  heroBadgeText: { color:'#fff', fontSize:12, fontWeight:'700' },
+  fixedHeader:  { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, gap: 12 },
+  navBtn:       { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  headerTitle:  { flex: 1, fontSize: 17, fontWeight: '800' },
+  hero:      { paddingTop: 20, paddingBottom: 28, paddingHorizontal: 22, overflow: 'hidden' },
+  heroHb1:      { position:'absolute', width:200, height:200, borderRadius:100, backgroundColor:'rgba(255,255,255,0.07)', top:-70, right:-50 },
+  heroHb2:      { position:'absolute', width:90,  height:90,  borderRadius:45,  backgroundColor:'rgba(255,255,255,0.07)', bottom:-20, left:10 },
+  heroIconBox:  { width:56, height:56, borderRadius:18, backgroundColor:'rgba(255,255,255,0.2)', justifyContent:'center', alignItems:'center', borderWidth:1.5, borderColor:'rgba(255,255,255,0.3)' },
+  heroTitle:    { color:'#fff', fontSize:20, fontWeight:'900', letterSpacing:0.2 },
+  heroSub:      { color:'rgba(255,255,255,0.8)', fontSize:13, marginTop:3, lineHeight:19 },
+  heroStats:    { flexDirection:'row', alignItems:'center', backgroundColor:'rgba(255,255,255,0.15)', borderRadius:16, paddingVertical:12, paddingHorizontal:8, borderWidth:1, borderColor:'rgba(255,255,255,0.2)' },
+  heroStat:     { flex:1, alignItems:'center' },
+  heroStatVal:  { color:'#fff', fontSize:18, fontWeight:'900' },
+  heroStatLabel:{ color:'rgba(255,255,255,0.7)', fontSize:10, marginTop:2, fontWeight:'600' },
+  heroStatDiv:  { width:1, height:28, backgroundColor:'rgba(255,255,255,0.25)' },
 
   catBtn:   { flexDirection:'row', alignItems:'center', gap:6, paddingVertical:9, paddingHorizontal:16, borderRadius:22, borderWidth:1.5 },
   catLabel: { fontSize:13 },
