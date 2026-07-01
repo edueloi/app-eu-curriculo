@@ -2,6 +2,7 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
+import { translations } from '../i18n/translations';
 
 // 1. IMPORTAÇÃO ATUALIZADA: Importando todos os 8 templates
 import {
@@ -40,48 +41,58 @@ const adicionarAoHistorico = async (curriculo, templateId) => {
   }
 };
 
+// tradução baseada no idioma do currículo
+const makeTForCurriculo = (curriculo) => (key) => {
+  if (!key) return '';
+  const keys = key.split('.');
+  let result = translations[curriculo?.idiomaCurriculo] ?? translations['pt-BR'];
+  for (const k of keys) { result = result?.[k]; if (result === undefined) return key; }
+  return result || key;
+};
+
 // 2. FUNÇÃO PRINCIPAL ATUALIZADA: Agora aceita cor e conhece todos os templates
 export async function gerarPDF(curriculo, templateId = "classic", corPrimaria, t) {
+  const tCurriculo = makeTForCurriculo(curriculo);
   try {
     let htmlContent = "";
 
     // Switch atualizado com todos os 8 templates e passando a cor primária
     switch (templateId) {
       case "creative":
-        htmlContent = templateCreative(curriculo, corPrimaria, t);
+        htmlContent = templateCreative(curriculo, corPrimaria, tCurriculo);
         break;
       case "corporate":
-        htmlContent = templateCorporate(curriculo, corPrimaria, t);
+        htmlContent = templateCorporate(curriculo, corPrimaria, tCurriculo);
         break;
       case "elegant":
-        htmlContent = templateElegant(curriculo, corPrimaria, t);
+        htmlContent = templateElegant(curriculo, corPrimaria, tCurriculo);
         break;
       case "minimalist":
-        htmlContent = templateMinimalist(curriculo, corPrimaria, t);
+        htmlContent = templateMinimalist(curriculo, corPrimaria, tCurriculo);
         break;
       case "inverted":
-        htmlContent = templateInverted(curriculo, corPrimaria, t);
+        htmlContent = templateInverted(curriculo, corPrimaria, tCurriculo);
         break;
       case "split":
-        htmlContent = templateSplit(curriculo, corPrimaria, t);
+        htmlContent = templateSplit(curriculo, corPrimaria, tCurriculo);
         break;
       case "dark":
-        htmlContent = templateDark(curriculo, corPrimaria, t);
+        htmlContent = templateDark(curriculo, corPrimaria, tCurriculo);
         break;
       case "timeline":
-        htmlContent = templateTimeline(curriculo, corPrimaria, t);
+        htmlContent = templateTimeline(curriculo, corPrimaria, tCurriculo);
         break;
       case "sideright":
-        htmlContent = templateSideRight(curriculo, corPrimaria, t);
+        htmlContent = templateSideRight(curriculo, corPrimaria, tCurriculo);
         break;
       case "bold":
-        htmlContent = templateBold(curriculo, corPrimaria, t);
+        htmlContent = templateBold(curriculo, corPrimaria, tCurriculo);
         break;
       case "compact":
-        htmlContent = templateCompact(curriculo, corPrimaria, t);
+        htmlContent = templateCompact(curriculo, corPrimaria, tCurriculo);
         break;
       default: // 'classic'
-        htmlContent = templateClassic(curriculo, corPrimaria, t);
+        htmlContent = templateClassic(curriculo, corPrimaria, tCurriculo);
     }
 
     const nomeUsuario = curriculo.dadosPessoais?.nome || "Curriculo";

@@ -13,8 +13,10 @@ import {
   templateClassic, templateCreative, templateCorporate, templateElegant,
   templateMinimalist, templateInverted, templateSplit, templateDark,
   templateTimeline, templateSideRight, templateBold, templateCompact,
+  labelsForCurriculo,
 } from '../utils/pdfTemplates';
 import { UserPreferencesContext } from '../context/UserPreferencesContext';
+import { translations } from '../i18n/translations';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const A4_RATIO = 1.4142;
@@ -98,9 +100,18 @@ export default function PreviewCurriculo({ route, navigation }) {
   };
   const lbl = LABELS[lang] || LABELS['pt-BR'];
 
+  // tradução baseada no idioma do currículo (não do app)
+  const tCurriculo = (key) => {
+    if (!key) return '';
+    const keys = key.split('.');
+    let result = translations[curriculo?.idiomaCurriculo] ?? translations['pt-BR'];
+    for (const k of keys) { result = result?.[k]; if (result === undefined) return key; }
+    return result || key;
+  };
+
   useEffect(() => {
     const fn = TEMPLATE_MAP[template] || templateClassic;
-    let html = fn(curriculo, g1, t);
+    let html = fn(curriculo, g1, tCurriculo);
 
     html = html.replace(
       '<meta name="viewport" content="width=device-width, initial-scale=1">',

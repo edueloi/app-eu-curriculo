@@ -174,6 +174,9 @@ function TemplateCard({ tpl, isSelected, isFav, onSelect, onPreview, onExport, o
   );
 }
 
+const LANG_FLAGS = { 'pt-BR': '🇧🇷', 'en': '🇺🇸', 'es': '🇪🇸' };
+const LANG_NAMES = { 'pt-BR': 'Português', 'en': 'English', 'es': 'Español' };
+
 /* ══ TELA PRINCIPAL ══ */
 export default function SelecionarTemplate({ route, navigation }) {
   const theme = useTheme();
@@ -185,6 +188,9 @@ export default function SelecionarTemplate({ route, navigation }) {
   const [search, setSearch] = useState('');
 
   const lang = language && CAT_LABELS[language] ? language : 'pt-BR';
+  const currLang = curriculo?.idiomaCurriculo;
+  const currFlag = currLang ? LANG_FLAGS[currLang] : null;
+  const currLangName = currLang ? LANG_NAMES[currLang] : null;
 
   useEffect(() => {
     AsyncStorage.getItem(FAV_KEY).then(raw => {
@@ -247,7 +253,15 @@ export default function SelecionarTemplate({ route, navigation }) {
           </TouchableOpacity>
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={s.headerTitle}>{hero.title}</Text>
-            <Text style={s.headerSub}>{hero.sub}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
+              <Text style={s.headerSub}>{hero.sub}</Text>
+              {currFlag ? (
+                <View style={s.langPill}>
+                  <Text style={s.langPillFlag}>{currFlag}</Text>
+                  <Text style={s.langPillTxt}>{currLangName}</Text>
+                </View>
+              ) : null}
+            </View>
           </View>
           <View style={s.headerIconBox}>
             <MaterialCommunityIcons name="palette-swatch-outline" size={22} color={theme.colors.primary} />
@@ -342,7 +356,10 @@ const s = StyleSheet.create({
   headerRow:     { flexDirection: 'row', alignItems: 'center' },
   headerBackBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
   headerTitle:   { color: '#fff', fontSize: 22, fontWeight: '900', letterSpacing: 0.2 },
-  headerSub:     { color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 3, fontWeight: '500' },
+  headerSub:     { color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: '500' },
+  langPill:      { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(255,255,255,0.22)', paddingVertical: 2, paddingHorizontal: 7, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)' },
+  langPillFlag:  { fontSize: 12 },
+  langPillTxt:   { color: '#fff', fontSize: 10, fontWeight: '700' },
   headerIconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 6 },
 
   searchRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },

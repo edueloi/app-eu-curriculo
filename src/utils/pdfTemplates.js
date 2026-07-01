@@ -1,17 +1,100 @@
+// --- LABELS POR IDIOMA (usados nos títulos das seções do PDF) ---
+const PDF_LABELS = {
+  'pt-BR': {
+    professionalSummary: 'Resumo Profissional',
+    objective:           'Objetivo',
+    professionalExperience: 'Experiência Profissional',
+    education:           'Formação Acadêmica',
+    coursesCertifications: 'Cursos e Certificações',
+    skills:              'Habilidades',
+    hardSkills:          'Hard Skills',
+    softSkills:          'Soft Skills',
+    languages:           'Idiomas',
+    present:             'Presente',
+    cnh:                 'CNH',
+    languageLevels: {
+      basic:        'Básico',
+      intermediate: 'Intermediário',
+      advanced:     'Avançado',
+      fluent:       'Fluente',
+      native:       'Nativo',
+    },
+  },
+  'en': {
+    professionalSummary: 'Professional Summary',
+    objective:           'Objective',
+    professionalExperience: 'Professional Experience',
+    education:           'Education',
+    coursesCertifications: 'Courses & Certifications',
+    skills:              'Skills',
+    hardSkills:          'Hard Skills',
+    softSkills:          'Soft Skills',
+    languages:           'Languages',
+    present:             'Present',
+    cnh:                 'Driver\'s License',
+    languageLevels: {
+      basic:        'Basic',
+      intermediate: 'Intermediate',
+      advanced:     'Advanced',
+      fluent:       'Fluent',
+      native:       'Native',
+    },
+  },
+  'es': {
+    professionalSummary: 'Resumen Profesional',
+    objective:           'Objetivo',
+    professionalExperience: 'Experiencia Profesional',
+    education:           'Formación Académica',
+    coursesCertifications: 'Cursos y Certificaciones',
+    skills:              'Habilidades',
+    hardSkills:          'Hard Skills',
+    softSkills:          'Soft Skills',
+    languages:           'Idiomas',
+    present:             'Presente',
+    cnh:                 'Licencia de Conducir',
+    languageLevels: {
+      basic:        'Básico',
+      intermediate: 'Intermedio',
+      advanced:     'Avanzado',
+      fluent:       'Fluido',
+      native:       'Nativo',
+    },
+  },
+};
+
+export const labelsForCurriculo = (curriculo) =>
+  PDF_LABELS[curriculo?.idiomaCurriculo] || PDF_LABELS['pt-BR'];
+
+// helper: linha de CNH para o PDF
+const cnhLine = (curriculo, L) => {
+  const cnh = curriculo?.dadosPessoais?.cnh?.trim();
+  if (!cnh) return '';
+  return `${L.cnh || 'CNH'}: ${cnh}`;
+};
+
 // --- FUNÇÕES AUXILIARES ---
-const formatDate = (dateString) => {
+const formatDate = (dateString, locale) => {
   if (!dateString) return '';
   const date = new Date(dateString);
   if (isNaN(date)) return '';
-  return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const loc = locale === 'en' ? 'en-US' : locale === 'es' ? 'es-ES' : 'pt-BR';
+  return date.toLocaleDateString(loc, { month: 'long', year: 'numeric' });
 };
 
-const formatPeriodo = (inicio, fim, atual) => {
-  const dataInicio = formatDate(inicio);
-  const dataFim = atual ? 'Presente' : formatDate(fim);
+const formatPeriodo = (inicio, fim, atual, L, locale) => {
+  const dataInicio = formatDate(inicio, locale);
+  const dataFim = atual ? (L?.present || 'Presente') : formatDate(fim, locale);
   if (!dataInicio) return '';
   return `${dataInicio} – ${dataFim}`;
 };
+
+// --- FILTROS: remove itens em branco antes de renderizar ---
+const expsFilled     = (c) => (c.experiencias  || []).filter(e => e.cargo?.trim() || e.empresa?.trim());
+const formacaoFilled = (c) => (c.formacao      || []).filter(f => f.curso?.trim() || f.instituicao?.trim());
+const certsFilled    = (c) => (c.certificacoes || []).filter(x => x.nome?.trim());
+const hardFilled     = (c) => (c.hardSkills    || []).filter(h => h.habilidade?.trim());
+const softFilled     = (c) => (c.softSkills    || []).filter(h => h.habilidade?.trim());
+const idiomasFilled  = (c) => (c.idiomas       || []).filter(i => i.idioma?.trim());
 
 // CSS base compartilhado: sem mm, totalmente fluido
 const BASE_CSS = `
@@ -25,7 +108,16 @@ const BASE_CSS = `
 // ==================================================
 // 1. TEMPLATE CLÁSSICO (ID: 'classic')
 // ==================================================
-export const templateClassic = (curriculo, corPrimaria = '#1A237E', t) => `
+export const templateClassic = (curriculo, corPrimaria = '#1A237E', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -62,62 +154,72 @@ h1 { font-size: 24pt; color: ${corPrimaria}; font-weight: 700; margin-bottom: 6p
   <div class="contato">
     ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone,
        (curriculo.dadosPessoais?.cidade ? curriculo.dadosPessoais.cidade + (curriculo.dadosPessoais?.estado ? '/' + curriculo.dadosPessoais.estado : '') : null),
-       curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site]
+       curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site,
+       cnhLine(curriculo, L)]
       .filter(Boolean).map(c => `<span>${c}</span>`).join(' &nbsp;•&nbsp; ')}
   </div>
 </div>
 
-${curriculo.resumoProfissional ? `<div class="section-title">Resumo Profissional</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
-${curriculo.objetivoProfissional ? `<div class="section-title">Objetivo</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
+${curriculo.resumoProfissional ? `<div class="section-title">${L.professionalSummary}</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
+${curriculo.objetivoProfissional ? `<div class="section-title">${L.objective}</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
 
-${(curriculo.experiencias?.length) ? `
-<div class="section-title">Experiência Profissional</div>
-${curriculo.experiencias.map(exp => `
+${(exps.length) ? `
+<div class="section-title">${L.professionalExperience}</div>
+${exps.map(exp => `
 <div class="job">
   <div class="job-header">
     <div class="job-title">${exp.cargo || ''}</div>
-    <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+    <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
   </div>
   <div class="job-company">${exp.empresa || ''}</div>
   ${exp.atividades ? `<div class="job-desc">${exp.atividades}</div>` : ''}
 </div>`).join('')}` : ''}
 
-${(curriculo.formacao?.length) ? `
-<div class="section-title">Formação Acadêmica</div>
-${curriculo.formacao.map(f => `
+${(formacao.length) ? `
+<div class="section-title">${L.education}</div>
+${formacao.map(f => `
 <div class="edu">
   <div class="edu-header">
     <div class="edu-course">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
-    ${f.anoConclusao ? `<div class="job-period">${formatDate(f.anoConclusao)}</div>` : ''}
+    ${f.anoConclusao ? `<div class="job-period">${formatDate(f.anoConclusao, locale)}</div>` : ''}
   </div>
   <div class="edu-inst">${f.instituicao || ''}</div>
 </div>`).join('')}` : ''}
 
-${(curriculo.certificacoes?.length) ? `
-<div class="section-title">Cursos e Certificações</div>
-${curriculo.certificacoes.map(c => `
-<div class="cert"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao)})` : ''}</div>`).join('')}` : ''}
+${(certs.length) ? `
+<div class="section-title">${L.coursesCertifications}</div>
+${certs.map(c => `
+<div class="cert"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao, locale)})` : ''}</div>`).join('')}` : ''}
 
-${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
-<div class="section-title">Habilidades</div>
+${(hard.length || soft.length) ? `
+<div class="section-title">${L.skills}</div>
 <div class="skills-text">
-  ${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => `<b>${h.habilidade}</b>`).join(' &nbsp;•&nbsp; ')}
+  ${[...hard, ...soft].map(h => `<b>${h.habilidade}</b>`).join(' &nbsp;•&nbsp; ')}
 </div>` : ''}
 
-${(curriculo.idiomas?.length) ? `
-<div class="section-title">Idiomas</div>
-${curriculo.idiomas.map(i => `<div class="lang-item"><b>${i.idioma}</b> <span class="lang-level">${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span></div>`).join('')}` : ''}
+${(idiomas.length) ? `
+<div class="section-title">${L.languages}</div>
+${idiomas.map(i => `<div class="lang-item"><b>${i.idioma}</b> <span class="lang-level">${L.languageLevels[i.nivel] || i.nivel}</span></div>`).join('')}` : ''}
 
 </body></html>`;
+};
 
 
 // ==================================================
 // 2. TEMPLATE CRIATIVO (ID: 'creative')
 // ==================================================
 export const templateCreative = (curriculo, corPrimaria = '#0F172A', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
   const partesNome = (curriculo.dadosPessoais?.nome || 'Seu Nome').trim().split(/\s+/);
   const nomeExibicao = partesNome.length > 1 ? partesNome[0] + ' ' + partesNome[partesNome.length - 1] : partesNome[0];
-  
+
   return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -161,59 +263,60 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1f29
     ${curriculo.dadosPessoais?.telefone ? `<div class="contact-item"><p>${curriculo.dadosPessoais.telefone}</p></div>` : ''}
     ${curriculo.dadosPessoais?.cidade ? `<div class="contact-item"><p>${curriculo.dadosPessoais.cidade}</p></div>` : ''}
     ${curriculo.dadosPessoais?.linkedin ? `<div class="contact-item"><p>${curriculo.dadosPessoais.linkedin}</p></div>` : ''}
+    ${cnhLine(curriculo, L) ? `<div class="contact-item"><p>${cnhLine(curriculo, L)}</p></div>` : ''}
   </div>
 
-  ${curriculo.hardSkills?.length ? `
-  <div class="s-section"><h3>Hard Skills</h3><ul>
-    ${curriculo.hardSkills.map(h => `<li>${h.habilidade}</li>`).join('')}
+  ${hard.length ? `
+  <div class="s-section"><h3>${L.hardSkills}</h3><ul>
+    ${hard.map(h => `<li>${h.habilidade}</li>`).join('')}
   </ul></div>` : ''}
 
-  ${curriculo.softSkills?.length ? `
-  <div class="s-section"><h3>Soft Skills</h3><ul>
-    ${curriculo.softSkills.map(s => `<li>${s.habilidade}</li>`).join('')}
+  ${soft.length ? `
+  <div class="s-section"><h3>${L.softSkills}</h3><ul>
+    ${soft.map(s => `<li>${s.habilidade}</li>`).join('')}
   </ul></div>` : ''}
 
-  ${curriculo.idiomas?.length ? `
-  <div class="s-section"><h3>Idiomas</h3><ul>
-    ${curriculo.idiomas.map(i => `<li><b>${i.idioma}</b> — ${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</li>`).join('')}
+  ${idiomas.length ? `
+  <div class="s-section"><h3>${L.languages}</h3><ul>
+    ${idiomas.map(i => `<li><b>${i.idioma}</b> — ${L.languageLevels[i.nivel] || i.nivel}</li>`).join('')}
   </ul></div>` : ''}
 </aside>
 
 <main class="content">
   ${curriculo.objetivoProfissional ? `
-  <div class="section-title">Objetivo</div>
+  <div class="section-title">${L.objective}</div>
   <p class="summary-text">${curriculo.objetivoProfissional}</p>` : ''}
 
-  ${curriculo.experiencias?.length ? `
-  <div class="section-title">Experiência</div>
-  ${curriculo.experiencias.map(exp => `
+  ${exps.length ? `
+  <div class="section-title">${L.professionalExperience}</div>
+  ${exps.map(exp => `
   <div class="item">
     <div class="item-header">
       <div class="item-title">${exp.cargo || ''}</div>
-      <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+      <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
     </div>
     <div class="item-sub">${exp.empresa || ''}</div>
     ${exp.atividades ? `<div class="item-desc">${exp.atividades}</div>` : ''}
   </div>`).join('')}` : ''}
 
-  ${curriculo.formacao?.length ? `
-  <div class="section-title">Formação Acadêmica</div>
-  ${curriculo.formacao.map(f => `
+  ${formacao.length ? `
+  <div class="section-title">${L.education}</div>
+  ${formacao.map(f => `
   <div class="item">
     <div class="item-header">
       <div class="item-title">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
-      ${f.anoConclusao ? `<div class="item-period">${formatDate(f.anoConclusao)}</div>` : ''}
+      ${f.anoConclusao ? `<div class="item-period">${formatDate(f.anoConclusao, locale)}</div>` : ''}
     </div>
     <div class="item-sub">${f.instituicao || ''}</div>
   </div>`).join('')}` : ''}
 
-  ${curriculo.certificacoes?.length ? `
-  <div class="section-title">Certificações</div>
-  ${curriculo.certificacoes.map(c => `
+  ${certs.length ? `
+  <div class="section-title">${L.coursesCertifications}</div>
+  ${certs.map(c => `
   <div class="item">
     <div class="item-header">
       <div class="item-title">${c.nome || ''}</div>
-      ${c.anoConclusao ? `<div class="item-period">${formatDate(c.anoConclusao)}</div>` : ''}
+      ${c.anoConclusao ? `<div class="item-period">${formatDate(c.anoConclusao, locale)}</div>` : ''}
     </div>
     <div class="item-sub">${c.instituicao || ''}</div>
   </div>`).join('')}` : ''}
@@ -222,7 +325,16 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1f29
 };
 
 
-export const templateCorporate = (curriculo, corPrimaria = '#1E3A8A', t) => `
+export const templateCorporate = (curriculo, corPrimaria = '#1E3A8A', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -273,71 +385,82 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #3341
     ${curriculo.dadosPessoais?.telefone ? `<div class="contact-line">${curriculo.dadosPessoais.telefone}</div>` : ''}
     ${curriculo.dadosPessoais?.linkedin ? `<div class="contact-line">${curriculo.dadosPessoais.linkedin}</div>` : ''}
     ${curriculo.dadosPessoais?.cidade ? `<div class="contact-line">${curriculo.dadosPessoais.cidade}</div>` : ''}
+    ${cnhLine(curriculo, L) ? `<div class="contact-line">${cnhLine(curriculo, L)}</div>` : ''}
   </div>
 </div>
 
 <div class="main-wrap">
   <aside class="sidebar">
-    ${curriculo.hardSkills?.length ? `
-    <div class="sidebar-title">Hard Skills</div>
+    ${hard.length ? `
+    <div class="sidebar-title">${L.hardSkills}</div>
     <ul class="skills-list">
-      ${curriculo.hardSkills.map(h => `<li>${h.habilidade}</li>`).join('')}
+      ${hard.map(h => `<li>${h.habilidade}</li>`).join('')}
     </ul>` : ''}
 
-    ${curriculo.softSkills?.length ? `
-    <div class="sidebar-title">Soft Skills</div>
+    ${soft.length ? `
+    <div class="sidebar-title">${L.softSkills}</div>
     <ul class="skills-list">
-      ${curriculo.softSkills.map(s => `<li>${s.habilidade}</li>`).join('')}
+      ${soft.map(s => `<li>${s.habilidade}</li>`).join('')}
     </ul>` : ''}
 
-    ${curriculo.idiomas?.length ? `
-    <div class="sidebar-title">Idiomas</div>
+    ${idiomas.length ? `
+    <div class="sidebar-title">${L.languages}</div>
     <ul class="skills-list">
-      ${curriculo.idiomas.map(i => `<li><b>${i.idioma}</b> &nbsp;|&nbsp; ${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</li>`).join('')}
+      ${idiomas.map(i => `<li><b>${i.idioma}</b> &nbsp;|&nbsp; ${L.languageLevels[i.nivel] || i.nivel}</li>`).join('')}
     </ul>` : ''}
   </aside>
 
   <main class="content">
     ${curriculo.objetivoProfissional ? `
-    <div class="section-title">Objetivo</div>
+    <div class="section-title">${L.objective}</div>
     <p class="summary-text">${curriculo.objetivoProfissional}</p>` : ''}
 
-    ${curriculo.experiencias?.length ? `
-    <div class="section-title">Experiência Profissional</div>
-    ${curriculo.experiencias.map(exp => `
+    ${exps.length ? `
+    <div class="section-title">${L.professionalExperience}</div>
+    ${exps.map(exp => `
     <div class="job">
       <div class="job-header">
         <div class="job-title">${exp.cargo || ''}</div>
-        <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+        <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
       </div>
       <div class="job-company">${exp.empresa || ''}</div>
       ${exp.atividades ? `<div class="job-desc">${exp.atividades}</div>` : ''}
     </div>`).join('')}` : ''}
 
-    ${curriculo.formacao?.length ? `
-    <div class="section-title">Formação Acadêmica</div>
-    ${curriculo.formacao.map(f => `
+    ${formacao.length ? `
+    <div class="section-title">${L.education}</div>
+    ${formacao.map(f => `
     <div class="edu">
       <div class="edu-title">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
-      <div class="edu-meta">${f.instituicao || ''}${f.anoConclusao ? ` &nbsp;•&nbsp; ${formatDate(f.anoConclusao)}` : ''}</div>
+      <div class="edu-meta">${f.instituicao || ''}${f.anoConclusao ? ` &nbsp;•&nbsp; ${formatDate(f.anoConclusao, locale)}` : ''}</div>
     </div>`).join('')}` : ''}
 
-    ${curriculo.certificacoes?.length ? `
-    <div class="section-title">Certificações</div>
-    ${curriculo.certificacoes.map(c => `
+    ${certs.length ? `
+    <div class="section-title">${L.coursesCertifications}</div>
+    ${certs.map(c => `
     <div class="edu">
       <div class="edu-title">${c.nome || ''}</div>
-      <div class="edu-meta">${c.instituicao || ''}${c.anoConclusao ? ` &nbsp;•&nbsp; ${formatDate(c.anoConclusao)}` : ''}</div>
+      <div class="edu-meta">${c.instituicao || ''}${c.anoConclusao ? ` &nbsp;•&nbsp; ${formatDate(c.anoConclusao, locale)}` : ''}</div>
     </div>`).join('')}` : ''}
   </main>
 </div>
 </body></html>`;
+};
 
 
 // ==================================================
 // 4. TEMPLATE ELEGANTE (ID: 'elegant')
 // ==================================================
-export const templateElegant = (curriculo, corPrimaria = '#831843', t) => `
+export const templateElegant = (curriculo, corPrimaria = '#831843', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -375,69 +498,79 @@ body { font-family: 'Georgia', 'Times New Roman', serif; color: #333; font-size:
     ${curriculo.dadosPessoais?.telefone ? `<span>${curriculo.dadosPessoais.telefone}</span>` : ''}
     ${curriculo.dadosPessoais?.linkedin ? `<span>${curriculo.dadosPessoais.linkedin}</span>` : ''}
     ${curriculo.dadosPessoais?.cidade ? `<span>${curriculo.dadosPessoais.cidade}</span>` : ''}
+    ${cnhLine(curriculo, L) ? `<span>${cnhLine(curriculo, L)}</span>` : ''}
   </div>
 </div>
 
 ${curriculo.objetivoProfissional ? `
-<div class="section-title">Objetivo</div>
+<div class="section-title">${L.objective}</div>
 <p class="summary-text">${curriculo.objetivoProfissional}</p>` : ''}
 
-${curriculo.experiencias?.length ? `
-<div class="section-title">Experiência Profissional</div>
-${curriculo.experiencias.map(exp => `
+${exps.length ? `
+<div class="section-title">${L.professionalExperience}</div>
+${exps.map(exp => `
 <div class="item">
   <div class="item-header">
     <div class="item-title">${exp.cargo || ''}</div>
-    <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+    <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
   </div>
   <div class="item-sub">${exp.empresa || ''}</div>
   ${exp.atividades ? `<div class="item-desc">${exp.atividades}</div>` : ''}
 </div>`).join('')}` : ''}
 
-${curriculo.formacao?.length ? `
-<div class="section-title">Formação Acadêmica</div>
-${curriculo.formacao.map(f => `
+${formacao.length ? `
+<div class="section-title">${L.education}</div>
+${formacao.map(f => `
 <div class="item">
   <div class="item-header">
     <div class="item-title">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
-    <div class="item-period">${f.anoConclusao ? formatDate(f.anoConclusao) : ''}</div>
+    <div class="item-period">${f.anoConclusao ? formatDate(f.anoConclusao, locale) : ''}</div>
   </div>
   <div class="item-sub">${f.instituicao || ''}</div>
 </div>`).join('')}` : ''}
 
-${curriculo.certificacoes?.length ? `
-<div class="section-title">Certificações</div>
-${curriculo.certificacoes.map(c => `
+${certs.length ? `
+<div class="section-title">${L.coursesCertifications}</div>
+${certs.map(c => `
 <div class="item">
   <div class="item-header">
     <div class="item-title">${c.nome || ''}</div>
-    <div class="item-period">${c.anoConclusao ? formatDate(c.anoConclusao) : ''}</div>
+    <div class="item-period">${c.anoConclusao ? formatDate(c.anoConclusao, locale) : ''}</div>
   </div>
   <div class="item-sub">${c.instituicao || ''}</div>
 </div>`).join('')}` : ''}
 
-${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
-<div class="section-title">Habilidades</div>
+${(hard.length || soft.length) ? `
+<div class="section-title">${L.skills}</div>
 <div class="skills-container">
-  ${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => `<span class="skill-pill">${h.habilidade}</span>`).join('')}
+  ${[...hard, ...soft].map(h => `<span class="skill-pill">${h.habilidade}</span>`).join('')}
 </div>` : ''}
 
-${curriculo.idiomas?.length ? `
-<div class="section-title">Idiomas</div>
+${idiomas.length ? `
+<div class="section-title">${L.languages}</div>
 <div class="skills-container">
-  ${curriculo.idiomas.map(i => `<span class="skill-pill"><b>${i.idioma}</b> — ${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span>`).join('')}
+  ${idiomas.map(i => `<span class="skill-pill"><b>${i.idioma}</b> — ${L.languageLevels[i.nivel] || i.nivel}</span>`).join('')}
 </div>` : ''}
 
 </body></html>`;
+};
 
 
 // ==================================================
 // 5. TEMPLATE MINIMALISTA (ID: 'minimalist')
 // ==================================================
 export const templateMinimalist = (curriculo, corPrimaria = '#111827', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
   const getContatos = (d) => {
     if (!d) return '';
-    return [d.email, d.telefone, (d.cidade && d.estado ? d.cidade + '/' + d.estado : d.cidade), d.linkedin, d.site]
+    return [d.email, d.telefone, (d.cidade && d.estado ? d.cidade + '/' + d.estado : d.cidade), d.linkedin, d.site, cnhLine(curriculo, L)]
       .filter(Boolean).join(' • ');
   };
   return `
@@ -468,55 +601,55 @@ ${curriculo.resumoProfissional ? `<p class="subtitle">${curriculo.resumoProfissi
 <p class="contato">${getContatos(curriculo.dadosPessoais)}</p>
 
 ${curriculo.objetivoProfissional ? `
-<div class="section-title">Objetivo</div>
+<div class="section-title">${L.objective}</div>
 <p style="font-size:11px;line-height:1.7;color:#444">${curriculo.objetivoProfissional}</p>` : ''}
 
-${curriculo.experiencias?.length ? `
-<div class="section-title">Experiência</div>
-${curriculo.experiencias.map(exp => `
+${exps.length ? `
+<div class="section-title">${L.professionalExperience}</div>
+${exps.map(exp => `
 <div class="item">
   <div class="item-header">
     <span class="item-title">${exp.cargo || ''}</span>
-    <span class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</span>
+    <span class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</span>
   </div>
   <div class="item-sub">${exp.empresa || ''}</div>
   <div class="item-desc">${exp.atividades || ''}</div>
 </div>`).join('')}` : ''}
 
-${curriculo.formacao?.length ? `
-<div class="section-title">Formação</div>
-${curriculo.formacao.map(f => `
+${formacao.length ? `
+<div class="section-title">${L.education}</div>
+${formacao.map(f => `
 <div class="item">
   <div class="item-header">
     <span class="item-title">${f.curso || ''}</span>
-    ${f.anoConclusao ? `<span class="item-period">${formatDate(f.anoConclusao)}</span>` : ''}
+    ${f.anoConclusao ? `<span class="item-period">${formatDate(f.anoConclusao, locale)}</span>` : ''}
   </div>
   <div class="item-sub">${f.instituicao || ''}${f.nivel ? ` — ${f.nivel}` : ''}</div>
 </div>`).join('')}` : ''}
 
-${curriculo.certificacoes?.length ? `
-<div class="section-title">Certificações</div>
-${curriculo.certificacoes.map(c => `
+${certs.length ? `
+<div class="section-title">${L.coursesCertifications}</div>
+${certs.map(c => `
 <div class="item">
   <div class="item-header">
     <span class="item-title">${c.nome || ''}</span>
-    ${c.anoConclusao ? `<span class="item-period">${formatDate(c.anoConclusao)}</span>` : ''}
+    ${c.anoConclusao ? `<span class="item-period">${formatDate(c.anoConclusao, locale)}</span>` : ''}
   </div>
   <div class="item-sub">${c.instituicao || ''}</div>
 </div>`).join('')}` : ''}
 
-${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
-<div class="section-title">Habilidades</div>
+${(hard.length || soft.length) ? `
+<div class="section-title">${L.skills}</div>
 <div class="skills-row">
-  ${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => `<span class="skill-chip">${h.habilidade}</span>`).join('')}
+  ${[...hard, ...soft].map(h => `<span class="skill-chip">${h.habilidade}</span>`).join('')}
 </div>` : ''}
 
-${curriculo.idiomas?.length ? `
-<div class="section-title">Idiomas</div>
-${curriculo.idiomas.map(i => `
+${idiomas.length ? `
+<div class="section-title">${L.languages}</div>
+${idiomas.map(i => `
 <div class="lang-row">
   <b>${i.idioma}</b>
-  <span style="color:#6b7280">${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span>
+  <span style="color:#6b7280">${L.languageLevels[i.nivel] || i.nivel}</span>
 </div>`).join('')}` : ''}
 
 </body></html>`;
@@ -526,7 +659,16 @@ ${curriculo.idiomas.map(i => `
 // ==================================================
 // 6. TEMPLATE COLUNA INVERTIDA (ID: 'inverted')
 // ==================================================
-export const templateInverted = (curriculo, corPrimaria = '#0277BD', t) => `
+export const templateInverted = (curriculo, corPrimaria = '#0277BD', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -559,24 +701,25 @@ body { font-family: 'Palatino Linotype', Palatino, Georgia, serif; color: #1a1a1
     ${curriculo.dadosPessoais?.telefone ? `<p>${curriculo.dadosPessoais.telefone}</p>` : ''}
     ${curriculo.dadosPessoais?.cidade ? `<p>${curriculo.dadosPessoais.cidade}</p>` : ''}
     ${curriculo.dadosPessoais?.linkedin ? `<p>${curriculo.dadosPessoais.linkedin}</p>` : ''}
+    ${cnhLine(curriculo, L) ? `<p>${cnhLine(curriculo, L)}</p>` : ''}
   </div>
 
-  ${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
+  ${(hard.length || soft.length) ? `
   <div class="s-section">
-    <h3>Habilidades</h3>
-    <ul>${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => `<li>${h.habilidade}</li>`).join('')}</ul>
+    <h3>${L.skills}</h3>
+    <ul>${[...hard, ...soft].map(h => `<li>${h.habilidade}</li>`).join('')}</ul>
   </div>` : ''}
 
-  ${curriculo.formacao?.length ? `
+  ${formacao.length ? `
   <div class="s-section">
-    <h3>Formação</h3>
-    ${curriculo.formacao.map(f => `<p><b>${f.curso || ''}</b><br>${f.instituicao || ''}</p>`).join('')}
+    <h3>${L.education}</h3>
+    ${formacao.map(f => `<p><b>${f.curso || ''}</b><br>${f.instituicao || ''}</p>`).join('')}
   </div>` : ''}
 
-  ${curriculo.idiomas?.length ? `
+  ${idiomas.length ? `
   <div class="s-section">
-    <h3>Idiomas</h3>
-    ${curriculo.idiomas.map(i => `<p><b>${i.idioma}</b> — ${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</p>`).join('')}
+    <h3>${L.languages}</h3>
+    ${idiomas.map(i => `<p><b>${i.idioma}</b> — ${L.languageLevels[i.nivel] || i.nivel}</p>`).join('')}
   </div>` : ''}
 </aside>
 
@@ -585,34 +728,44 @@ body { font-family: 'Palatino Linotype', Palatino, Georgia, serif; color: #1a1a1
   ${curriculo.resumoProfissional ? `<p class="tagline">${curriculo.resumoProfissional}</p>` : ''}
 
   ${curriculo.objetivoProfissional ? `
-  <div class="section-title">Objetivo</div>
+  <div class="section-title">${L.objective}</div>
   <p style="font-size:11px;line-height:1.7;color:#333;margin-bottom:8px">${curriculo.objetivoProfissional}</p>` : ''}
 
-  ${curriculo.experiencias?.length ? `
-  <div class="section-title">Experiência</div>
-  ${curriculo.experiencias.map(exp => `
+  ${exps.length ? `
+  <div class="section-title">${L.professionalExperience}</div>
+  ${exps.map(exp => `
   <div class="item">
     <div class="item-title">${exp.cargo || ''}</div>
     <div class="item-sub">${exp.empresa || ''}</div>
-    <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+    <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
     <div class="item-desc">${exp.atividades || ''}</div>
   </div>`).join('')}` : ''}
 
-  ${curriculo.certificacoes?.length ? `
-  <div class="section-title">Certificações</div>
-  ${curriculo.certificacoes.map(c => `
+  ${certs.length ? `
+  <div class="section-title">${L.coursesCertifications}</div>
+  ${certs.map(c => `
   <div class="item">
     <div class="item-title">${c.nome || ''}</div>
-    <div class="item-sub">${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao)})` : ''}</div>
+    <div class="item-sub">${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao, locale)})` : ''}</div>
   </div>`).join('')}` : ''}
 </main>
 </body></html>`;
+};
 
 
 // ==================================================
 // 7. TEMPLATE SPLIT (ID: 'split')
 // ==================================================
-export const templateSplit = (curriculo, corPrimaria = '#4527A0', t) => `
+export const templateSplit = (curriculo, corPrimaria = '#4527A0', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -646,7 +799,7 @@ body { font-family: 'Trebuchet MS', Arial, sans-serif; color: #1f2937; font-size
   <div class="header-left">
     <h1>${curriculo.dadosPessoais?.nome || 'Seu Nome'}</h1>
     <div class="contacts">
-      ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone, curriculo.dadosPessoais?.cidade, curriculo.dadosPessoais?.linkedin].filter(Boolean).map(c => `<div>${c}</div>`).join('')}
+      ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone, curriculo.dadosPessoais?.cidade, curriculo.dadosPessoais?.linkedin, cnhLine(curriculo, L)].filter(Boolean).map(c => `<div>${c}</div>`).join('')}
     </div>
   </div>
   <div class="header-right">
@@ -658,67 +811,77 @@ body { font-family: 'Trebuchet MS', Arial, sans-serif; color: #1f2937; font-size
 <div class="body">
   <main class="main">
     ${curriculo.objetivoProfissional ? `
-    <div class="section-title">Objetivo</div>
+    <div class="section-title">${L.objective}</div>
     <p style="font-size:11px;line-height:1.7;color:#374151;margin-bottom:12px">${curriculo.objetivoProfissional}</p>` : ''}
 
-    ${curriculo.experiencias?.length ? `
-    <div class="section-title">Experiência</div>
-    ${curriculo.experiencias.map(exp => `
+    ${exps.length ? `
+    <div class="section-title">${L.professionalExperience}</div>
+    ${exps.map(exp => `
     <div class="item">
       <div class="item-title">${exp.cargo || ''}</div>
       <div class="item-sub">${exp.empresa || ''}</div>
-      <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+      <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
       <div class="item-desc">${exp.atividades || ''}</div>
     </div>`).join('')}` : ''}
 
-    ${curriculo.formacao?.length ? `
-    <div class="section-title">Formação</div>
-    ${curriculo.formacao.map(f => `
+    ${formacao.length ? `
+    <div class="section-title">${L.education}</div>
+    ${formacao.map(f => `
     <div class="item">
       <div class="item-title">${f.curso || ''}</div>
-      <div class="item-sub">${f.instituicao || ''}${f.anoConclusao ? ` — ${formatDate(f.anoConclusao)}` : ''}</div>
+      <div class="item-sub">${f.instituicao || ''}${f.anoConclusao ? ` — ${formatDate(f.anoConclusao, locale)}` : ''}</div>
     </div>`).join('')}` : ''}
   </main>
 
   <aside class="aside">
     ${curriculo.resumoProfissional ? `
     <div class="s-section" style="margin-bottom:14px">
-      <h3>Perfil</h3>
+      <h3>${L.professionalSummary}</h3>
       <p>${curriculo.resumoProfissional}</p>
     </div>` : ''}
 
-    ${curriculo.hardSkills?.length ? `
+    ${hard.length ? `
     <div class="s-section">
-      <h3>Hard Skills</h3>
-      <ul>${curriculo.hardSkills.map(h => `<li>${h.habilidade}</li>`).join('')}</ul>
+      <h3>${L.hardSkills}</h3>
+      <ul>${hard.map(h => `<li>${h.habilidade}</li>`).join('')}</ul>
     </div>` : ''}
 
-    ${curriculo.softSkills?.length ? `
+    ${soft.length ? `
     <div class="s-section">
-      <h3>Soft Skills</h3>
-      <ul>${curriculo.softSkills.map(s => `<li>${s.habilidade}</li>`).join('')}</ul>
+      <h3>${L.softSkills}</h3>
+      <ul>${soft.map(s => `<li>${s.habilidade}</li>`).join('')}</ul>
     </div>` : ''}
 
-    ${curriculo.certificacoes?.length ? `
+    ${certs.length ? `
     <div class="s-section">
-      <h3>Certificações</h3>
-      <ul>${curriculo.certificacoes.map(c => `<li>${c.nome || ''}</li>`).join('')}</ul>
+      <h3>${L.coursesCertifications}</h3>
+      <ul>${certs.map(c => `<li>${c.nome || ''}</li>`).join('')}</ul>
     </div>` : ''}
 
-    ${curriculo.idiomas?.length ? `
+    ${idiomas.length ? `
     <div class="s-section">
-      <h3>Idiomas</h3>
-      ${curriculo.idiomas.map(i => `<p><b>${i.idioma}</b> — ${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</p>`).join('')}
+      <h3>${L.languages}</h3>
+      ${idiomas.map(i => `<p><b>${i.idioma}</b> — ${L.languageLevels[i.nivel] || i.nivel}</p>`).join('')}
     </div>` : ''}
   </aside>
 </div>
 </body></html>`;
+};
 
 
 // ==================================================
 // 8. TEMPLATE DARK (ID: 'dark')
 // ==================================================
-export const templateDark = (curriculo, corPrimaria = '#34d399', t) => `
+export const templateDark = (curriculo, corPrimaria = '#34d399', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -757,63 +920,74 @@ h1 { font-size: 24pt; color: #FFFFFF; font-weight: 800; margin-bottom: 6px; lett
     ${curriculo.dadosPessoais?.telefone ? `<span>${curriculo.dadosPessoais.telefone}</span>` : ''}
     ${curriculo.dadosPessoais?.linkedin ? `<span>${curriculo.dadosPessoais.linkedin}</span>` : ''}
     ${curriculo.dadosPessoais?.cidade ? `<span>${curriculo.dadosPessoais.cidade}</span>` : ''}
+    ${cnhLine(curriculo, L) ? `<span>${cnhLine(curriculo, L)}</span>` : ''}
   </div>
   <div style="clear: both;"></div>
 </div>
 
 ${curriculo.objetivoProfissional ? `
-<div class="section-title">Objetivo</div>
+<div class="section-title">${L.objective}</div>
 <p class="summary-text">${curriculo.objetivoProfissional}</p>` : ''}
 
-${curriculo.experiencias?.length ? `
-<div class="section-title">Experiência</div>
-${curriculo.experiencias.map(exp => `
+${exps.length ? `
+<div class="section-title">${L.professionalExperience}</div>
+${exps.map(exp => `
 <div class="item">
   <div class="item-title">${exp.cargo || ''}</div>
   <div class="item-sub">${exp.empresa || ''}</div>
-  <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+  <div class="item-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
   <div class="item-desc">${exp.atividades || ''}</div>
 </div>`).join('')}` : ''}
 
-${curriculo.formacao?.length ? `
-<div class="section-title">Formação</div>
-${curriculo.formacao.map(f => `
+${formacao.length ? `
+<div class="section-title">${L.education}</div>
+${formacao.map(f => `
 <div class="item">
   <div class="item-title">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
   <div class="item-sub">${f.instituicao || ''}</div>
-  <div class="item-period">${f.anoConclusao ? formatDate(f.anoConclusao) : ''}</div>
+  <div class="item-period">${f.anoConclusao ? formatDate(f.anoConclusao, locale) : ''}</div>
 </div>`).join('')}` : ''}
 
-${curriculo.certificacoes?.length ? `
-<div class="section-title">Certificações</div>
-${curriculo.certificacoes.map(c => `
+${certs.length ? `
+<div class="section-title">${L.coursesCertifications}</div>
+${certs.map(c => `
 <div class="item">
   <div class="item-title">${c.nome || ''}</div>
   <div class="item-sub">${c.instituicao || ''}</div>
-  <div class="item-period">${c.anoConclusao ? formatDate(c.anoConclusao) : ''}</div>
+  <div class="item-period">${c.anoConclusao ? formatDate(c.anoConclusao, locale) : ''}</div>
 </div>`).join('')}` : ''}
 
-${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
-<div class="section-title">Habilidades</div>
+${(hard.length || soft.length) ? `
+<div class="section-title">${L.skills}</div>
 <div class="skills-wrap">
-  ${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => `<span class="skill-tag">${h.habilidade}</span>`).join('')}
+  ${[...hard, ...soft].map(h => `<span class="skill-tag">${h.habilidade}</span>`).join('')}
 </div>` : ''}
 
-${curriculo.idiomas?.length ? `
-<div class="section-title">Idiomas</div>
-${curriculo.idiomas.map(i => `
+${idiomas.length ? `
+<div class="section-title">${L.languages}</div>
+${idiomas.map(i => `
 <div class="lang-row">
   <b style="color:#F8FAFC">${i.idioma}</b>
-  <span style="color:${corPrimaria}">${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span>
+  <span style="color:${corPrimaria}">${L.languageLevels[i.nivel] || i.nivel}</span>
 </div>`).join('')}` : ''}
 
 </body></html>`;
+};
 
 
 // ==================================================
 // 9. TEMPLATE TIMELINE (ID: 'timeline')
 // ==================================================
-export const templateTimeline = (curriculo, corPrimaria = '#0F766E', t) => `
+export const templateTimeline = (curriculo, corPrimaria = '#0F766E', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -862,59 +1036,59 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e29
     <div class="contacts">
       ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone,
          curriculo.dadosPessoais?.cidade ? curriculo.dadosPessoais.cidade + (curriculo.dadosPessoais?.estado ? '/' + curriculo.dadosPessoais.estado : '') : null,
-         curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site]
+         curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site, cnhLine(curriculo, L)]
         .filter(Boolean).map(c => `<span>${c}</span>`).join('')}
     </div>
   </div>
 </div>
 
-${curriculo.resumoProfissional ? `<div class="section-title">Resumo</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
-${curriculo.objetivoProfissional ? `<div class="section-title">Objetivo</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
+${curriculo.resumoProfissional ? `<div class="section-title">${L.professionalSummary}</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
+${curriculo.objetivoProfissional ? `<div class="section-title">${L.objective}</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
 
-${curriculo.experiencias?.length ? `
-<div class="section-title">Experiência</div>
+${exps.length ? `
+<div class="section-title">${L.professionalExperience}</div>
 <div class="tl-wrap">
-${curriculo.experiencias.map(exp => `
+${exps.map(exp => `
 <div class="tl-item">
   <div class="tl-dot"></div>
   <div class="tl-header">
     <div class="tl-title">${exp.cargo || ''}</div>
-    <div class="tl-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+    <div class="tl-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
   </div>
   <div class="tl-sub">${exp.empresa || ''}</div>
   ${exp.atividades ? `<div class="tl-desc">${exp.atividades}</div>` : ''}
 </div>`).join('')}
 </div>` : ''}
 
-${curriculo.formacao?.length ? `
-<div class="section-title">Formação</div>
-${curriculo.formacao.map(f => `
+${formacao.length ? `
+<div class="section-title">${L.education}</div>
+${formacao.map(f => `
 <div class="edu-item">
   <div class="edu-left">
     <div class="edu-course">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
     <div class="edu-inst">${f.instituicao || ''}</div>
   </div>
-  ${f.anoConclusao ? `<div class="edu-right">${formatDate(f.anoConclusao)}</div>` : ''}
+  ${f.anoConclusao ? `<div class="edu-right">${formatDate(f.anoConclusao, locale)}</div>` : ''}
 </div>`).join('')}` : ''}
 
-${curriculo.certificacoes?.length ? `
-<div class="section-title">Certificações</div>
-${curriculo.certificacoes.map(c => `<div class="cert-item"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` · ${formatDate(c.anoConclusao)}` : ''}</div>`).join('')}` : ''}
+${certs.length ? `
+<div class="section-title">${L.coursesCertifications}</div>
+${certs.map(c => `<div class="cert-item"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` · ${formatDate(c.anoConclusao, locale)}` : ''}</div>`).join('')}` : ''}
 
-${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
-<div class="section-title">Habilidades</div>
+${(hard.length || soft.length) ? `
+<div class="section-title">${L.skills}</div>
 <div class="skills-grid">
-  ${(curriculo.hardSkills || []).map(h => `<span class="skill-chip">${h.habilidade}</span>`).join('')}
-  ${(curriculo.softSkills || []).map(h => `<span class="skill-chip-soft">${h.habilidade}</span>`).join('')}
+  ${hard.map(h => `<span class="skill-chip">${h.habilidade}</span>`).join('')}
+  ${soft.map(h => `<span class="skill-chip-soft">${h.habilidade}</span>`).join('')}
 </div>` : ''}
 
-${curriculo.idiomas?.length ? `
-<div class="section-title">Idiomas</div>
+${idiomas.length ? `
+<div class="section-title">${L.languages}</div>
 <table class="lang-table">
-${curriculo.idiomas.map(i => {
+${idiomas.map(i => {
   const nivelMap = { basico: 25, elementar: 40, intermediario: 55, intermediario_avancado: 70, avancado: 85, fluente: 95, nativo: 100 };
   const pct = nivelMap[i.nivel] || 60;
-  const label = t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel;
+  const label = L.languageLevels[i.nivel] || i.nivel;
   return `<tr>
   <td class="lang-td-name">${i.idioma}</td>
   <td class="lang-td-bar"><div class="lang-bar-bg"><div class="lang-bar-fill" style="width:${pct}%"></div></div></td>
@@ -924,12 +1098,22 @@ ${curriculo.idiomas.map(i => {
 </table>` : ''}
 
 </body></html>`;
+};
 
 
 // ==================================================
 // 10. TEMPLATE SIDEBAR DIREITA (ID: 'sideright')
 // ==================================================
-export const templateSideRight = (curriculo, corPrimaria = '#1D4ED8', t) => `
+export const templateSideRight = (curriculo, corPrimaria = '#1D4ED8', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -966,35 +1150,35 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e29
 <div class="main">
   <div class="name">${curriculo.dadosPessoais?.nome || 'Seu Nome Completo'}</div>
 
-  ${curriculo.resumoProfissional ? `<div class="section-title">Resumo</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
-  ${curriculo.objetivoProfissional ? `<div class="section-title">Objetivo</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
+  ${curriculo.resumoProfissional ? `<div class="section-title">${L.professionalSummary}</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
+  ${curriculo.objetivoProfissional ? `<div class="section-title">${L.objective}</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
 
-  ${curriculo.experiencias?.length ? `
-  <div class="section-title">Experiência</div>
-  ${curriculo.experiencias.map(exp => `
+  ${exps.length ? `
+  <div class="section-title">${L.professionalExperience}</div>
+  ${exps.map(exp => `
   <div class="job">
     <div class="job-row">
       <div class="job-title">${exp.cargo || ''}</div>
-      <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+      <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
     </div>
     <div class="job-company">${exp.empresa || ''}</div>
     ${exp.atividades ? `<div class="job-desc">${exp.atividades}</div>` : ''}
   </div>`).join('')}` : ''}
 
-  ${curriculo.formacao?.length ? `
-  <div class="section-title">Formação</div>
-  ${curriculo.formacao.map(f => `
+  ${formacao.length ? `
+  <div class="section-title">${L.education}</div>
+  ${formacao.map(f => `
   <div class="edu-row">
     <div>
       <div class="edu-course">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
       <div class="edu-inst">${f.instituicao || ''}</div>
     </div>
-    ${f.anoConclusao ? `<div class="edu-year">${formatDate(f.anoConclusao)}</div>` : ''}
+    ${f.anoConclusao ? `<div class="edu-year">${formatDate(f.anoConclusao, locale)}</div>` : ''}
   </div>`).join('')}` : ''}
 
-  ${curriculo.certificacoes?.length ? `
-  <div class="section-title">Certificações</div>
-  ${curriculo.certificacoes.map(c => `<div class="cert-line"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao)})` : ''}</div>`).join('')}` : ''}
+  ${certs.length ? `
+  <div class="section-title">${L.coursesCertifications}</div>
+  ${certs.map(c => `<div class="cert-line"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao, locale)})` : ''}</div>`).join('')}` : ''}
 </div>
 
 <div class="sidebar">
@@ -1002,30 +1186,40 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e29
   <div class="s-title">Contato</div>
   ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone,
      curriculo.dadosPessoais?.cidade ? curriculo.dadosPessoais.cidade + (curriculo.dadosPessoais?.estado ? '/' + curriculo.dadosPessoais.estado : '') : null,
-     curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site]
+     curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site, cnhLine(curriculo, L)]
     .filter(Boolean).map(c => `<div class="contact-line">${c}</div>`).join('')}
 
-  ${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
-  <div class="s-title">Habilidades</div>
-  ${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => `<span class="s-chip">${h.habilidade}</span>`).join('')}` : ''}
+  ${(hard.length || soft.length) ? `
+  <div class="s-title">${L.skills}</div>
+  ${[...hard, ...soft].map(h => `<span class="s-chip">${h.habilidade}</span>`).join('')}` : ''}
 
-  ${curriculo.idiomas?.length ? `
-  <div class="s-title">Idiomas</div>
-  ${curriculo.idiomas.map(i => `
+  ${idiomas.length ? `
+  <div class="s-title">${L.languages}</div>
+  ${idiomas.map(i => `
   <div class="lang-line">
     <span>${i.idioma}</span>
-    <span class="lang-lv">${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span>
+    <span class="lang-lv">${L.languageLevels[i.nivel] || i.nivel}</span>
   </div>`).join('')}` : ''}
 </div>
 
 </body></html>`;
+};
 
 
 // ==================================================
 // 11. TEMPLATE BOLD (ID: 'bold')
 // Header colorido com nome grande, corpo limpo em duas colunas
 // ==================================================
-export const templateBold = (curriculo, corPrimaria = '#7C3AED', t) => `
+export const templateBold = (curriculo, corPrimaria = '#7C3AED', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -1072,7 +1266,7 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e29
       <div class="header-contacts">
         ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone,
            curriculo.dadosPessoais?.cidade ? curriculo.dadosPessoais.cidade + (curriculo.dadosPessoais?.estado ? '/' + curriculo.dadosPessoais.estado : '') : null,
-           curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site]
+           curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site, cnhLine(curriculo, L)]
           .filter(Boolean).map(c => `<span>${c}</span>`).join('')}
       </div>
     </div>
@@ -1081,62 +1275,72 @@ body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #1e29
 <div class="accent-bar"></div>
 
 <div class="body">
-  ${curriculo.resumoProfissional ? `<div class="section-title">Resumo</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
-  ${curriculo.objetivoProfissional ? `<div class="section-title">Objetivo</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
+  ${curriculo.resumoProfissional ? `<div class="section-title">${L.professionalSummary}</div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
+  ${curriculo.objetivoProfissional ? `<div class="section-title">${L.objective}</div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
 
-  ${curriculo.experiencias?.length ? `
-  <div class="section-title">Experiência</div>
-  ${curriculo.experiencias.map(exp => `
+  ${exps.length ? `
+  <div class="section-title">${L.professionalExperience}</div>
+  ${exps.map(exp => `
   <div class="job">
     <div class="job-row">
       <div class="job-title">${exp.cargo || ''}</div>
-      <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+      <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
     </div>
     <div class="job-company">${exp.empresa || ''}</div>
     ${exp.atividades ? `<div class="job-desc">${exp.atividades}</div>` : ''}
   </div>`).join('')}` : ''}
 
   <div class="two-col">
-    ${curriculo.formacao?.length ? `
+    ${formacao.length ? `
     <div class="col">
-      <div class="section-title">Formação</div>
-      ${curriculo.formacao.map(f => `
+      <div class="section-title">${L.education}</div>
+      ${formacao.map(f => `
       <div class="edu-item">
         <div class="edu-course">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
         <div class="edu-inst">${f.instituicao || ''}</div>
-        ${f.anoConclusao ? `<div class="edu-year">${formatDate(f.anoConclusao)}</div>` : ''}
+        ${f.anoConclusao ? `<div class="edu-year">${formatDate(f.anoConclusao, locale)}</div>` : ''}
       </div>`).join('')}
     </div>` : ''}
-    ${(curriculo.hardSkills?.length || curriculo.softSkills?.length || curriculo.idiomas?.length) ? `
+    ${(hard.length || soft.length || idiomas.length) ? `
     <div class="col">
-      ${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
-      <div class="section-title">Habilidades</div>
+      ${(hard.length || soft.length) ? `
+      <div class="section-title">${L.skills}</div>
       <div class="skills-wrap">
-        ${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => `<span class="skill-tag">${h.habilidade}</span>`).join('')}
+        ${[...hard, ...soft].map(h => `<span class="skill-tag">${h.habilidade}</span>`).join('')}
       </div>` : ''}
-      ${curriculo.idiomas?.length ? `
-      <div class="section-title">Idiomas</div>
-      ${curriculo.idiomas.map(i => `
+      ${idiomas.length ? `
+      <div class="section-title">${L.languages}</div>
+      ${idiomas.map(i => `
       <div class="lang-row">
         <b>${i.idioma}</b>
-        <span class="lang-lv">${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span>
+        <span class="lang-lv">${L.languageLevels[i.nivel] || i.nivel}</span>
       </div>`).join('')}` : ''}
     </div>` : ''}
   </div>
 
-  ${curriculo.certificacoes?.length ? `
-  <div class="section-title">Certificações</div>
-  ${curriculo.certificacoes.map(c => `<div class="cert-item"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao)})` : ''}</div>`).join('')}` : ''}
+  ${certs.length ? `
+  <div class="section-title">${L.coursesCertifications}</div>
+  ${certs.map(c => `<div class="cert-item"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao, locale)})` : ''}</div>`).join('')}` : ''}
 </div>
 
 </body></html>`;
+};
 
 
 // ==================================================
 // 12. TEMPLATE COMPACT (ID: 'compact')
 // Tipografia serif, máxima densidade, sem cores de fundo
 // ==================================================
-export const templateCompact = (curriculo, corPrimaria = '#0369A1', t) => `
+export const templateCompact = (curriculo, corPrimaria = '#0369A1', t) => {
+  const L = labelsForCurriculo(curriculo);
+  const locale = curriculo?.idiomaCurriculo || 'pt-BR';
+  const exps     = expsFilled(curriculo);
+  const formacao = formacaoFilled(curriculo);
+  const certs    = certsFilled(curriculo);
+  const hard     = hardFilled(curriculo);
+  const soft     = softFilled(curriculo);
+  const idiomas  = idiomasFilled(curriculo);
+  return `
 <!DOCTYPE html><html><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -1177,57 +1381,58 @@ body { font-family: Georgia, 'Times New Roman', serif; color: #111; font-size: 1
   <div class="contacts">
     ${[curriculo.dadosPessoais?.email, curriculo.dadosPessoais?.telefone,
        curriculo.dadosPessoais?.cidade ? curriculo.dadosPessoais.cidade + (curriculo.dadosPessoais?.estado ? '/' + curriculo.dadosPessoais.estado : '') : null,
-       curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site]
+       curriculo.dadosPessoais?.linkedin, curriculo.dadosPessoais?.site, cnhLine(curriculo, L)]
       .filter(Boolean).map(c => `<span>${c}</span>`).join(' &nbsp;|&nbsp; ')}
   </div>
 </div>
 <div class="top-divider"></div>
 
-${curriculo.resumoProfissional ? `<div class="section-title">Perfil Profissional</div><div class="divider"></div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
-${curriculo.objetivoProfissional ? `<div class="section-title">Objetivo</div><div class="divider"></div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
+${curriculo.resumoProfissional ? `<div class="section-title">${L.professionalSummary}</div><div class="divider"></div><p class="summary">${curriculo.resumoProfissional}</p>` : ''}
+${curriculo.objetivoProfissional ? `<div class="section-title">${L.objective}</div><div class="divider"></div><p class="summary">${curriculo.objetivoProfissional}</p>` : ''}
 
-${curriculo.experiencias?.length ? `
-<div class="section-title">Experiência Profissional</div><div class="divider"></div>
-${curriculo.experiencias.map(exp => `
+${exps.length ? `
+<div class="section-title">${L.professionalExperience}</div><div class="divider"></div>
+${exps.map(exp => `
 <div class="job">
   <div class="job-row">
     <div class="job-title">${exp.cargo || ''}</div>
-    <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual)}</div>
+    <div class="job-period">${formatPeriodo(exp.dataInicio, exp.dataFim, exp.atual, L, locale)}</div>
   </div>
   <div class="job-company">${exp.empresa || ''}</div>
   ${exp.atividades ? `<div class="job-desc">${exp.atividades}</div>` : ''}
 </div>`).join('')}` : ''}
 
-${curriculo.formacao?.length ? `
-<div class="section-title">Formação Acadêmica</div><div class="divider"></div>
-${curriculo.formacao.map(f => `
+${formacao.length ? `
+<div class="section-title">${L.education}</div><div class="divider"></div>
+${formacao.map(f => `
 <div class="edu-row">
   <div>
     <div class="edu-course">${f.curso || ''} ${f.nivel ? `(${f.nivel})` : ''}</div>
     <div class="edu-inst">${f.instituicao || ''}</div>
   </div>
-  ${f.anoConclusao ? `<div class="edu-year">${formatDate(f.anoConclusao)}</div>` : ''}
+  ${f.anoConclusao ? `<div class="edu-year">${formatDate(f.anoConclusao, locale)}</div>` : ''}
 </div>`).join('')}` : ''}
 
 <div class="two-col">
-  ${(curriculo.hardSkills?.length || curriculo.softSkills?.length) ? `
+  ${(hard.length || soft.length) ? `
   <div class="col">
-    <div class="section-title">Habilidades</div><div class="divider"></div>
-    <div class="skills-text">${[...(curriculo.hardSkills || []), ...(curriculo.softSkills || [])].map(h => h.habilidade).join(' · ')}</div>
+    <div class="section-title">${L.skills}</div><div class="divider"></div>
+    <div class="skills-text">${[...hard, ...soft].map(h => h.habilidade).join(' · ')}</div>
   </div>` : ''}
-  ${curriculo.idiomas?.length ? `
+  ${idiomas.length ? `
   <div class="col">
-    <div class="section-title">Idiomas</div><div class="divider"></div>
-    ${curriculo.idiomas.map(i => `
+    <div class="section-title">${L.languages}</div><div class="divider"></div>
+    ${idiomas.map(i => `
     <div class="lang-row">
       <b>${i.idioma}</b>
-      <span class="lang-lv">${t ? t('languageLevels.' + i.nivel) || i.nivel : i.nivel}</span>
+      <span class="lang-lv">${L.languageLevels[i.nivel] || i.nivel}</span>
     </div>`).join('')}
   </div>` : ''}
 </div>
 
-${curriculo.certificacoes?.length ? `
-<div class="section-title">Certificações</div><div class="divider"></div>
-${curriculo.certificacoes.map(c => `<div class="cert-item"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao)})` : ''}</div>`).join('')}` : ''}
+${certs.length ? `
+<div class="section-title">${L.coursesCertifications}</div><div class="divider"></div>
+${certs.map(c => `<div class="cert-item"><b>${c.nome || ''}</b> — ${c.instituicao || ''}${c.anoConclusao ? ` (${formatDate(c.anoConclusao, locale)})` : ''}</div>`).join('')}` : ''}
 
 </body></html>`;
+};

@@ -432,9 +432,19 @@ export default function ListaCurriculos({ navigation, route }) {
               <View style={{ flex: 1, marginLeft: 14 }}>
                 <Text style={[s.cardName, { color: theme.colors.onSurface }]} numberOfLines={1}>{nome}</Text>
                 {profissao ? <Text style={[s.cardSub, { color: theme.colors.onSurfaceVariant }]} numberOfLines={1}>{profissao}</Text> : null}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
                   <MaterialCommunityIcons name="clock-outline" size={11} color={theme.colors.onSurfaceVariant} />
                   <Text style={[s.cardDate, { color: theme.colors.onSurfaceVariant }]}>{fmtDate(cur.lastUpdated)}</Text>
+                  {cur.idiomaCurriculo && cur.idiomaCurriculo !== 'pt-BR' ? (
+                    <View style={[s.langFlag, { backgroundColor: c1 + '18', borderColor: c1 + '40' }]}>
+                      <Text style={s.langFlagEmoji}>
+                        {cur.idiomaCurriculo === 'en' ? '🇺🇸' : cur.idiomaCurriculo === 'es' ? '🇪🇸' : '🇧🇷'}
+                      </Text>
+                      <Text style={[s.langFlagTxt, { color: c1 }]}>
+                        {cur.idiomaCurriculo === 'en' ? 'EN' : cur.idiomaCurriculo === 'es' ? 'ES' : 'PT'}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               </View>
 
@@ -652,6 +662,9 @@ const s = StyleSheet.create({
   importExtLabel:   { fontSize: 9, fontWeight: '900', letterSpacing: 1, marginTop: 1 },
   importedTagBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
   importedTagText:  { fontSize: 10, fontWeight: '700' },
+  langFlag:         { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, borderWidth: 1 },
+  langFlagEmoji:    { fontSize: 11 },
+  langFlagTxt:      { fontSize: 10, fontWeight: '700' },
   importDivider:    { height: 1, marginVertical: 14 },
   importCardActions:{ flexDirection: 'row', gap: 10 },
   importBtnOutline: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 11, borderRadius: 14, borderWidth: 1.5 },

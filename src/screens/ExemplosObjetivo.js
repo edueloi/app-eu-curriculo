@@ -1,37 +1,146 @@
-import React, { useState, useMemo, useContext } from "react";
-import { StyleSheet, View, FlatList } from "react-native";
+import React, { useState, useMemo, useContext, useRef } from "react";
 import {
-  Appbar, List, Card, Button, Dialog, Portal, Paragraph, Searchbar, Text, useTheme, Title
-} from "react-native-paper";
+  StyleSheet, View, FlatList, TouchableOpacity,
+  Dimensions, Animated, Modal, StatusBar,
+} from "react-native";
+import { Text, Searchbar, useTheme } from "react-native-paper";
 import * as Animatable from "react-native-animatable";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { UserPreferencesContext } from "../context/UserPreferencesContext";
 import { translationsFormsExemple } from "../i18n/translationsFormsExemple";
 
+const { width } = Dimensions.get("window");
+
+/* ── Card de frase individual ── */
+function FraseCard({ frase, selecionado, onPress, idx, theme }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const isSelected = selecionado === frase;
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.96, duration: 80, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 5, useNativeDriver: true }),
+    ]).start();
+    onPress(frase);
+  };
+
+  return (
+    <Animatable.View animation="fadeInLeft" duration={350} delay={idx * 50}>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <TouchableOpacity
+          onPress={handlePress}
+          activeOpacity={0.85}
+          style={[
+            s.fraseCard,
+            {
+              backgroundColor: isSelected
+                ? theme.colors.primaryContainer
+                : theme.colors.surface,
+              borderColor: isSelected
+                ? theme.colors.primary
+                : theme.colors.outlineVariant,
+              borderWidth: isSelected ? 2 : 1,
+            },
+          ]}
+        >
+          <MaterialCommunityIcons
+            name={isSelected ? "check-circle" : "format-quote-open"}
+            size={20}
+            color={isSelected ? theme.colors.primary : theme.colors.onSurfaceVariant}
+            style={{ marginTop: 2 }}
+          />
+          <Text
+            style={[
+              s.fraseText,
+              {
+                color: isSelected ? theme.colors.primary : theme.colors.onSurface,
+                fontWeight: isSelected ? "600" : "400",
+              },
+            ]}
+          >
+            {frase}
+          </Text>
+          {isSelected && (
+            <Animatable.View animation="bounceIn" duration={400}>
+              <View style={[s.selectedBadge, { backgroundColor: theme.colors.primary }]}>
+                <Text style={s.selectedBadgeTxt}>Selecionado</Text>
+              </View>
+            </Animatable.View>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
+    </Animatable.View>
+  );
+}
+
+/* ── Accordion de área ── */
+function AreaAccordion({ item, selecionado, onSelect, index, theme }) {
+  const [aberto, setAberto] = useState(false);
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  const toggle = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Animated.spring(rotateAnim, {
+      toValue: aberto ? 0 : 1,
+      friction: 6,
+      useNativeDriver: true,
+    }).start();
+    setAberto(v => !v);
+  };
+
+  const rotate = rotateAnim.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "180deg"] });
+
+  return (
+    <Animatable.View animation="fadeInUp" duration={450} delay={index * 60}>
+      <TouchableOpacity onPress={toggle} activeOpacity={0.88} style={[s.accordionWrap, { backgroundColor: theme.colors.surface }]}>
+        <LinearGradient
+          colors={[theme.colors.primary, theme.colors.secondary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={s.accordionHeader}
+        >
+          <View style={s.accordionBlob} />
+          <View style={[s.accordionIconBox, { backgroundColor: theme.colors.surface }]}>
+            <MaterialCommunityIcons name={item.icon} size={20} color={theme.colors.primary} />
+          </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={s.accordionTitle}>{item.area}</Text>
+            <Text style={s.accordionCount}>{item.frases.length} exemplos</Text>
+          </View>
+          <Animated.View style={{ transform: [{ rotate }] }}>
+            <MaterialCommunityIcons name="chevron-down" size={22} color="#fff" />
+          </Animated.View>
+        </LinearGradient>
+
+        {aberto && (
+          <View style={[s.accordionBody, { backgroundColor: theme.colors.surfaceVariant }]}>
+            {item.frases.map((frase, idx) => (
+              <FraseCard
+                key={idx}
+                frase={frase}
+                selecionado={selecionado}
+                onPress={onSelect}
+                idx={idx}
+                theme={theme}
+              />
+            ))}
+          </View>
+        )}
+      </TouchableOpacity>
+    </Animatable.View>
+  );
+}
+
+/* ── Tela principal ── */
 export default function ExemplosObjetivo({ navigation, route }) {
   const theme = useTheme();
-  const styles = getStyles(theme);
-
-  const { locale, t } = useContext(UserPreferencesContext);
+  const { locale } = useContext(UserPreferencesContext);
   const [selecionado, setSelecionado] = useState(null);
-  const [dialogVisible, setDialogVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const confirmarSelecao = (frase) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSelecionado(frase);
-    setDialogVisible(true);
-  };
-
-  const aplicarExemplo = () => {
-    if (selecionado) {
-      route.params?.onSelect(selecionado); // chama direto o callback
-    }
-    setDialogVisible(false);
-    navigation.goBack(); // apenas fecha o modal
-  };
-
 
   const filteredData = useMemo(() => {
     const data = Object.entries(translationsFormsExemple)
@@ -41,224 +150,201 @@ export default function ExemplosObjetivo({ navigation, route }) {
         icon: dados.icon,
         frases: dados[locale] || dados.pt,
       }));
-
     const normalize = (str) =>
-      str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/gi, '').toLowerCase();
+      str.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
     if (!searchQuery) return data;
     const q = normalize(searchQuery);
     return data.filter((item) => normalize(item.area).includes(q));
   }, [searchQuery, locale]);
 
-  const renderItem = ({ item, index }) => (
-    <Animatable.View animation="fadeInUp" duration={500} delay={index * 80}>
-      <List.Accordion
-        key={item.area}
-        title={item.area}
-        titleStyle={styles.sectionTitle}
-        left={(props) => (
-          <List.Icon {...props} color={theme.colors.primary} icon={item.icon} />
-        )}
-        style={styles.accordion}
-      >
-        {item.frases.map((frase, idx) => (
-          <Animatable.View
-            key={idx}
-            animation="fadeInRight"
-            delay={idx * 60}
-          >
-            <Card
-              style={[
-                styles.card,
-                selecionado === frase && styles.cardSelected, // Estilo dinâmico de seleção
-              ]}
-              onPress={() => confirmarSelecao(frase)}
-            >
-              <Card.Content style={styles.cardContent}>
-                <List.Icon
-                  icon="format-quote-open"
-                  color={selecionado === frase ? theme.colors.primary : theme.colors.onSurfaceVariant}
-                  style={styles.quoteIcon}
-                />
-                <Paragraph style={styles.cardText}>{frase}</Paragraph>
-              </Card.Content>
-            </Card>
-          </Animatable.View>
-        ))}
-      </List.Accordion>
-    </Animatable.View>
-  );
+  const handleSelect = (frase) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelecionado(frase);
+    setModalVisible(true);
+  };
+
+  const aplicar = () => {
+    setModalVisible(false);
+    if (selecionado) {
+      navigation.goBack();
+      const callback = route.params?.onSelecionar;
+      if (typeof callback === 'function') {
+        callback(selecionado);
+      }
+    }
+  };
+
+  const totalExemplos = filteredData.reduce((acc, i) => acc + i.frases.length, 0);
 
   return (
-    <View style={styles.screenContainer}>
-      <Appbar.Header style={styles.appbar}>
-        <Appbar.BackAction
-          onPress={() => navigation.goBack()}
-          color={theme.colors.onSurface}
-        />
-        <Appbar.Content
-          title={t("objectiveExamples")}
-          titleStyle={styles.appbarTitle}
-        />
-        <Appbar.Action icon="lightbulb-on-outline" color={theme.colors.primary} />
-      </Appbar.Header>
+    <SafeAreaView style={[s.root, { backgroundColor: theme.colors.background }]} edges={["top"]}>
+      <StatusBar barStyle="light-content" backgroundColor={theme.colors.primary} />
 
-      <View style={styles.headerContainer}>
-          <LinearGradient 
-            colors={[theme.colors.primary, theme.colors.secondary]} 
-            style={styles.gradient}
-          >
-            <Title style={styles.headerTitle}>{t("inspirationTitle")}</Title>
-            <Paragraph style={styles.headerSubtitle}>
-              {t("inspirationSubtitle")}
-            </Paragraph>
-            <Searchbar
-              placeholder={t("filterPlaceholder")}
-              onChangeText={setSearchQuery}
-              value={searchQuery}
-              style={styles.searchbar}
-              icon="magnify"
-            />
-          </LinearGradient>
-      </View>
+      {/* ── HEADER FIXO ── */}
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.secondary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={s.header}
+      >
+        <View style={[s.blob, { width: 160, height: 160, top: -60, right: -50 }]} />
+        <View style={[s.blob, { width: 80, height: 80, bottom: -20, left: 20 }]} />
 
+        <View style={s.headerRow}>
+          <TouchableOpacity style={s.headerBackBtn} onPress={() => navigation.goBack()}>
+            <MaterialCommunityIcons name="arrow-left" size={20} color="#fff" />
+          </TouchableOpacity>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={s.headerTitle}>Exemplos de Objetivo</Text>
+            <Text style={s.headerSub}>{filteredData.length} áreas · {totalExemplos} frases</Text>
+          </View>
+          <View style={[s.headerIconBox, { backgroundColor: theme.colors.surface }]}>
+            <MaterialCommunityIcons name="lightbulb-on-outline" size={22} color={theme.colors.primary} />
+          </View>
+        </View>
+
+        {/* busca */}
+        <View style={s.searchWrap}>
+          <MaterialCommunityIcons name="magnify" size={18} color="rgba(255,255,255,0.7)" style={{ marginLeft: 4 }} />
+          <Searchbar
+            placeholder="Buscar área..."
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={s.searchbar}
+            inputStyle={s.searchInput}
+            iconColor="transparent"
+            placeholderTextColor="rgba(255,255,255,0.55)"
+          />
+        </View>
+      </LinearGradient>
+
+      {/* ── LISTA ── */}
       <FlatList
         data={filteredData}
-        renderItem={renderItem}
         keyExtractor={(item) => item.area}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={s.listContent}
         keyboardShouldPersistTaps="handled"
+        renderItem={({ item, index }) => (
+          <AreaAccordion
+            item={item}
+            selecionado={selecionado}
+            onSelect={handleSelect}
+            index={index}
+            theme={theme}
+          />
+        )}
         ListEmptyComponent={
-          <View style={styles.emptyStateContainer}>
-            <Animatable.View
-              animation="pulse"
-              easing="ease-out"
-              iterationCount="infinite"
-            >
-              <List.Icon
-                icon="emoticon-sad-outline"
-                size={70}
-                color={theme.colors.onSurfaceDisabled}
-              />
-            </Animatable.View>
-            <Text style={styles.emptyStateText}>{t("noAreaFound")}</Text>
-            <Paragraph>{t("tryDifferentSearch")}</Paragraph>
-          </View>
+          <Animatable.View animation="fadeIn" style={s.emptyBox}>
+            <Animatable.Text animation="pulse" iterationCount="infinite" style={s.emptyEmoji}>🔍</Animatable.Text>
+            <Text style={[s.emptyTitle, { color: theme.colors.onSurface }]}>Nenhuma área encontrada</Text>
+            <Text style={[s.emptySub, { color: theme.colors.onSurfaceVariant }]}>Tente outro termo de busca</Text>
+          </Animatable.View>
         }
       />
 
-      <Portal>
-        <Dialog
-          visible={dialogVisible}
-          onDismiss={() => setDialogVisible(false)}
-          style={styles.dialog}
-        >
-          <Dialog.Title>{t("confirmObjective")}</Dialog.Title>
-          <Dialog.Content>
-            <Paragraph>{t("applyObjective")}</Paragraph>
-            <Paragraph style={styles.selectedText}>{selecionado}</Paragraph>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setDialogVisible(false)} textColor={theme.colors.primary}>
-              {t("cancel")}
-            </Button>
-            <Button onPress={aplicarExemplo} mode="contained">
-              {t("add")}
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-    </View>
+      {/* ── MODAL DE CONFIRMAÇÃO ── */}
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
+        <View style={s.modalOverlay}>
+          <Animatable.View animation="slideInUp" duration={350} style={[s.modalBox, { backgroundColor: theme.colors.surface }]}>
+            <LinearGradient
+              colors={[theme.colors.primary, theme.colors.secondary]}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+              style={s.modalGradHeader}
+            >
+              <MaterialCommunityIcons name="check-circle-outline" size={28} color="#fff" />
+              <Text style={s.modalGradTitle}>Usar este exemplo?</Text>
+            </LinearGradient>
+
+            <View style={s.modalBody}>
+              <View style={[s.modalFraseBox, { backgroundColor: theme.colors.primaryContainer, borderColor: theme.colors.primary }]}>
+                <MaterialCommunityIcons name="format-quote-open" size={18} color={theme.colors.primary} />
+                <Text style={[s.modalFraseTxt, { color: theme.colors.onPrimaryContainer }]}>{selecionado}</Text>
+              </View>
+              <Text style={[s.modalHint, { color: theme.colors.onSurfaceVariant }]}>
+                Este texto será copiado para o campo "Objetivo Profissional" do seu currículo.
+              </Text>
+            </View>
+
+            <View style={s.modalActions}>
+              <TouchableOpacity
+                style={[s.modalBtnCancel, { borderColor: theme.colors.outlineVariant }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={[s.modalBtnCancelTxt, { color: theme.colors.onSurfaceVariant }]}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.modalBtnConfirm} onPress={aplicar}>
+                <LinearGradient
+                  colors={[theme.colors.primary, theme.colors.secondary]}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={s.modalBtnGrad}
+                >
+                  <MaterialCommunityIcons name="check" size={16} color="#fff" />
+                  <Text style={s.modalBtnGradTxt}>Usar exemplo</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </Animatable.View>
+        </View>
+      </Modal>
+
+    </SafeAreaView>
   );
 }
 
-const getStyles = (theme) =>
-  StyleSheet.create({
-    screenContainer: { flex: 1, backgroundColor: theme.colors.background },
-    appbar: { backgroundColor: theme.colors.surface, elevation: 0 },
-    appbarTitle: { fontWeight: "bold", color: theme.colors.onSurface },
-    headerContainer: {
-        backgroundColor: theme.colors.surface,
-    },
-    gradient: {
-      padding: 20,
-      paddingBottom: 24,
-      borderBottomLeftRadius: 32,
-      borderBottomRightRadius: 32,
-      elevation: 4,
-    },
-    headerTitle: {
-      fontSize: 26,
-      fontWeight: "bold",
-      color: "#fff",
-      textAlign: "center",
-    },
-    headerSubtitle: {
-      fontSize: 16,
-      color: "rgba(255, 255, 255, 0.8)",
-      marginBottom: 16,
-      textAlign: "center",
-    },
-    searchbar: {
-      borderRadius: 30,
-      backgroundColor: theme.colors.surface,
-      elevation: 2,
-    },
-    listContent: { 
-      paddingHorizontal: 16, 
-      paddingTop: 16, // Espaçamento do topo
-      paddingBottom: 48
-    },
-    accordion: {
-      backgroundColor: theme.colors.surface,
-      borderRadius: 16,
-      marginBottom: 12,
-      elevation: 2,
-    },
-    sectionTitle: {
-      fontWeight: "bold",
-      fontSize: 16,
-      color: theme.colors.onSurface,
-    },
-    card: {
-      marginVertical: 6,
-      marginHorizontal: 12,
-      borderRadius: 12,
-      backgroundColor: theme.colors.surfaceVariant,
-    },
-    cardSelected: {
-      borderWidth: 2,
-      borderColor: theme.colors.primary,
-      backgroundColor: theme.colors.primaryContainer,
-    },
-    cardContent: { flexDirection: "row", alignItems: "center", paddingRight: 8 },
-    quoteIcon: { marginRight: 8 },
-    cardText: {
-      flex: 1,
-      lineHeight: 22,
-      color: theme.colors.onSurfaceVariant,
-    },
-    selectedText: {
-      marginTop: 12,
-      fontStyle: "italic",
-      fontWeight: "bold",
-      color: theme.colors.primary,
-      textAlign: 'center',
-    },
-    emptyStateContainer: {
-      flex: 1,
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 32,
-      marginTop: 48,
-    },
-    emptyStateText: {
-      fontSize: 18,
-      fontWeight: "bold",
-      marginBottom: 8,
-      color: theme.colors.onBackground,
-    },
-    dialog: {
-      borderRadius: 20,
-      backgroundColor: theme.colors.surface,
-    },
-  });
+const s = StyleSheet.create({
+  root: { flex: 1 },
+
+  /* header */
+  header:        { paddingHorizontal: 16, paddingVertical: 16, overflow: "hidden", elevation: 6 },
+  blob:          { position: "absolute", borderRadius: 999, backgroundColor: "rgba(255,255,255,0.07)" },
+  headerRow:     { flexDirection: "row", alignItems: "center" },
+  headerBackBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.2)", justifyContent: "center", alignItems: "center" },
+  headerTitle:   { color: "#fff", fontSize: 20, fontWeight: "900", letterSpacing: 0.2 },
+  headerSub:     { color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 2 },
+  headerIconBox: { width: 44, height: 44, borderRadius: 14, justifyContent: "center", alignItems: "center", elevation: 4 },
+
+  /* busca */
+  searchWrap:  { flexDirection: "row", alignItems: "center", marginTop: 12, backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 14, paddingHorizontal: 6, borderWidth: 1, borderColor: "rgba(255,255,255,0.25)" },
+  searchbar:   { flex: 1, backgroundColor: "transparent", elevation: 0, height: 42 },
+  searchInput: { color: "#fff", fontSize: 14 },
+
+  /* lista */
+  listContent: { padding: 16, paddingBottom: 48, gap: 12 },
+
+  /* accordion */
+  accordionWrap:    { borderRadius: 18, overflow: "hidden", elevation: 3, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.12, shadowRadius: 6 },
+  accordionHeader:  { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 14, overflow: "hidden" },
+  accordionBlob:    { position: "absolute", width: 80, height: 80, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.1)", right: -20, top: -20 },
+  accordionIconBox: { width: 38, height: 38, borderRadius: 12, justifyContent: "center", alignItems: "center", elevation: 2 },
+  accordionTitle:   { color: "#fff", fontSize: 15, fontWeight: "800" },
+  accordionCount:   { color: "rgba(255,255,255,0.75)", fontSize: 11, marginTop: 2 },
+  accordionBody:    { paddingVertical: 8, paddingHorizontal: 10, gap: 8 },
+
+  /* frase card */
+  fraseCard:        { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 14 },
+  fraseText:        { flex: 1, fontSize: 14, lineHeight: 22 },
+  selectedBadge:    { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, marginTop: 6 },
+  selectedBadgeTxt: { color: "#fff", fontSize: 11, fontWeight: "700" },
+
+  /* empty */
+  emptyBox:   { alignItems: "center", paddingTop: 60, gap: 10 },
+  emptyEmoji: { fontSize: 52 },
+  emptyTitle: { fontSize: 18, fontWeight: "700" },
+  emptySub:   { fontSize: 14 },
+
+  /* modal */
+  modalOverlay:     { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+  modalBox:         { borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: "hidden" },
+  modalGradHeader:  { flexDirection: "row", alignItems: "center", gap: 10, padding: 20, paddingBottom: 16 },
+  modalGradTitle:   { color: "#fff", fontSize: 18, fontWeight: "800" },
+  modalBody:        { padding: 20, gap: 12 },
+  modalFraseBox:    { flexDirection: "row", gap: 10, padding: 14, borderRadius: 14, borderWidth: 1.5, alignItems: "flex-start" },
+  modalFraseTxt:    { flex: 1, fontSize: 14, lineHeight: 22, fontStyle: "italic" },
+  modalHint:        { fontSize: 13, lineHeight: 18 },
+  modalActions:     { flexDirection: "row", gap: 10, padding: 20, paddingTop: 0, paddingBottom: 36 },
+  modalBtnCancel:   { flex: 1, borderWidth: 1.5, justifyContent: "center", alignItems: "center", paddingVertical: 14, borderRadius: 14 },
+  modalBtnCancelTxt:{ fontSize: 14, fontWeight: "600" },
+  modalBtnConfirm:  { flex: 1, borderRadius: 14, overflow: "hidden" },
+  modalBtnGrad:     { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 14 },
+  modalBtnGradTxt:  { color: "#fff", fontSize: 14, fontWeight: "700" },
+});
