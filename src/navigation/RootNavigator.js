@@ -12,6 +12,8 @@ import PreviewCurriculo from "../screens/PreviewCurriculo";
 import BlogScreen from "../screens/BlogScreen";
 import ArtigoScreen from '../screens/ArtigoScreen';
 import TelaFormulario from "../screens/TelaFormulario";
+import QuizPerfil from "../screens/QuizPerfil";
+import QuizEntrevista from "../screens/QuizEntrevista";
 
 const Stack = createStackNavigator();
 
@@ -34,6 +36,8 @@ export default function RootNavigator() {
           <Stack.Screen name="BlogScreen" component={BlogScreen} options={{ headerShown: false }}/>
            <Stack.Screen name="ArtigoScreen" component={ArtigoScreen} options={{ headerShown: false }} />
           <Stack.Screen name="CriarCurrículo" component={TelaFormulario} options={{ headerShown: false }} />
+          <Stack.Screen name="QuizPerfil" component={QuizPerfil} options={{ headerShown: false }} />
+          <Stack.Screen name="QuizEntrevista" component={QuizEntrevista} options={{ headerShown: false }} />
 
           {/* Ecrã que abre como um "modal" */}
           <Stack.Screen

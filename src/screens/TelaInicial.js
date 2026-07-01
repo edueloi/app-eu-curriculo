@@ -260,6 +260,71 @@ export default function TelaInicial({ navigation }) {
           ))}
         </ScrollView>
 
+        {/* ══════════ FERRAMENTAS DE CARREIRA ══════════ */}
+        <Animatable.View animation="fadeInUp" duration={500} delay={520}>
+          <SectionLabel label="Ferramentas de carreira" theme={theme} />
+
+          {/* Card grande — Quiz Perfil */}
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => navigation.navigate('QuizPerfil')}
+            style={s.careerCardLarge}
+          >
+            <LinearGradient
+              colors={['#4F46E5', '#7C3AED', '#BE185D']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={s.careerCardGrad}
+            >
+              <View style={[s.bubble, { width: 180, height: 180, top: -60, right: -50 }]} />
+              <View style={[s.bubble, { width: 90,  height: 90,  bottom: -25, left: -20 }]} />
+              <View style={s.careerCardInner}>
+                <View style={s.careerIconWrap}>
+                  <MaterialCommunityIcons name="brain" size={28} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.careerTag}>QUIZ INTERATIVO</Text>
+                  <Text style={s.careerTitle}>Perfil Profissional</Text>
+                  <Text style={s.careerSub}>20 perguntas · 6 perfis · 5 min</Text>
+                </View>
+                <View style={s.careerArrow}>
+                  <MaterialCommunityIcons name="arrow-right" size={16} color="#fff" />
+                </View>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Card grande — Simulador de Entrevistas */}
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => navigation.navigate('QuizEntrevista')}
+            style={[s.careerCardLarge, { marginTop: 10 }]}
+          >
+            <LinearGradient
+              colors={['#0C4A6E', '#0369A1', '#0EA5E9']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={s.careerCardGrad}
+            >
+              <View style={[s.bubble, { width: 180, height: 180, top: -60, right: -50 }]} />
+              <View style={[s.bubble, { width: 90,  height: 90,  bottom: -25, left: -20 }]} />
+              <View style={s.careerCardInner}>
+                <View style={s.careerIconWrap}>
+                  <MaterialCommunityIcons name="account-tie-voice" size={28} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.careerTag}>SIMULADOR</Text>
+                  <Text style={s.careerTitle}>Entrevistas</Text>
+                  <Text style={s.careerSub}>60+ perguntas · 10 áreas</Text>
+                </View>
+                <View style={s.careerArrow}>
+                  <MaterialCommunityIcons name="arrow-right" size={16} color="#fff" />
+                </View>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animatable.View>
+
         {/* ══════════ RECURSOS ÚTEIS ══════════ */}
         <Animatable.View animation="fadeInUp" duration={500} delay={550}>
           <SectionLabel label={t('usefulResources')} theme={theme} />
@@ -472,6 +537,74 @@ const createStyles = (theme) => StyleSheet.create({
   },
   tipChipGrad: { width: 46, height: 46, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 14 },
   tipText: { fontSize: 14, lineHeight: 22, fontWeight: '700' },
+
+  /* CAREER CARDS */
+  careerCardLarge: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+  },
+  careerCardGrad: {
+    paddingVertical: 22,
+    paddingHorizontal: 20,
+    overflow: 'hidden',
+  },
+  careerCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  careerIconWrap: {
+    width: 54, height: 54,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.32)',
+    flexShrink: 0,
+  },
+  careerTag: {
+    color: 'rgba(255,255,255,0.65)',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    marginBottom: 3,
+  },
+  careerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 3,
+    letterSpacing: 0.2,
+  },
+  careerSub: {
+    color: 'rgba(255,255,255,0.72)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  careerArrow: {
+    width: 34, height: 34, borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    justifyContent: 'center', alignItems: 'center',
+    flexShrink: 0,
+  },
+
+  /* legado mantido para não quebrar referências antigas */
+  quizCard: { borderRadius: 22, overflow: 'hidden' },
+  quizGradient: { padding: 20, overflow: 'hidden' },
+  quizContent: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  quizIconBox: { width: 58, height: 58, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+  quizTitle: { color: '#fff', fontSize: 16, fontWeight: '900', marginBottom: 4 },
+  quizSub: { color: 'rgba(255,255,255,0.75)', fontSize: 12, fontWeight: '600' },
+  quizArrow: {
+    width: 36, height: 36, borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center', alignItems: 'center',
+  },
 
   /* RECURSOS */
   resourcesCard: {
